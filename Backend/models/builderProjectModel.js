@@ -1,48 +1,30 @@
 const mongoose = require("mongoose");
 
-const coworkingSpaceModel = mongoose.Schema(
+const builderProjectModel = mongoose.Schema(
   {
     name: { type: String, unique: true, required: true },
-    description: String,
-    website_Url: String,
-    added_by: String,
-    images: [
-      {
-        image: String,
-        name: String,
-        alt: String,
-      },
-    ],
-    amenties: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Amenity",
-      },
-    ],
-    seo: {
-      title: { type: String },
-      description: { type: String },
-      robots: String,
-      index: Boolean,
-      keywords: String,
-      url: String,
-      status: {
-        type: Boolean,
-        default: true,
-      },
-      twitter: {
-        title: String,
-        description: String,
-      },
-      open_graph: {
-        title: String,
-        description: String,
-      },
+    builder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Builder",
+    },
+    project_type: String,
+    slug: String,
+    starting_price: String,
+    configuration: String,
+    ratings: Number,
+    coming_soon: String,
+    project_status: String,
+    project_size: String,
+    short_descrip: String,
+    for_rent: {
+      type: Boolean,
+      default: false,
+    },
+    for_sale: {
+      type: Boolean,
+      default: false,
     },
     location: {
-      name: String,
-      name1: String,
-      floor: String,
       address: String,
       country: {
         type: mongoose.Schema.Types.ObjectId,
@@ -95,6 +77,61 @@ const coworkingSpaceModel = mongoose.Schema(
         default: false,
       },
     },
+    plans: [
+      {
+        id: Number,
+        category: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "PropertyType",
+        },
+        size: String,
+        size_sq: String,
+        price: Number,
+        image: [],
+        should_show: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    ],
+    master_plan: String,
+    highlights: String,
+    amenties: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Amenity",
+      },
+    ],
+    description: String,
+    images: [
+      {
+        image: String,
+        name: String,
+        alt: String,
+      },
+    ],
+
+    seo: {
+      title: { type: String },
+      description: { type: String },
+      robots: String,
+      index: Boolean,
+      keywords: String,
+      url: String,
+      status: {
+        type: Boolean,
+        default: true,
+      },
+      twitter: {
+        title: String,
+        description: String,
+      },
+      open_graph: {
+        title: String,
+        description: String,
+      },
+    },
+
     geo_location: {
       type: {
         type: String,
@@ -104,72 +141,7 @@ const coworkingSpaceModel = mongoose.Schema(
         type: [Number],
       },
     },
-    hours_of_operation: {
-      monday_friday: {
-        from: String,
-        to: String,
-        should_show: {
-          type: Boolean,
-          default: true,
-        },
-        is_closed: {
-          type: Boolean,
-          default: false,
-        },
-        is_open_24: {
-          type: Boolean,
-          default: false,
-        },
-      },
-      saturday: {
-        from: String,
-        to: String,
-        should_show: {
-          type: Boolean,
-          default: false,
-        },
-        is_closed: {
-          type: Boolean,
-          default: false,
-        },
-        is_open_24: {
-          type: Boolean,
-          default: false,
-        },
-      },
-      sunday: {
-        from: String,
-        to: String,
-        should_show: {
-          type: Boolean,
-          default: false,
-        },
-        is_closed: {
-          type: Boolean,
-          default: false,
-        },
-        is_open_24: {
-          type: Boolean,
-          default: false,
-        },
-      },
-    },
-    no_of_seats: Number,
-    plans: [
-      {
-        id: Number,
-        category: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "PropertyType",
-        },
-        duration: String,
-        price: Number,
-        should_show: {
-          type: Boolean,
-          default: true,
-        },
-      },
-    ],
+
     contact_details: [
       {
         id: Number,
@@ -188,11 +160,7 @@ const coworkingSpaceModel = mongoose.Schema(
       enum: ["pending", "approve", "reject"],
       default: "pending",
     },
-    brand: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Brand",
-    },
-    slug: String,
+
     priority: {
       is_active: {
         type: Boolean,
@@ -226,6 +194,6 @@ const coworkingSpaceModel = mongoose.Schema(
     timestamps: true,
   }
 );
-coworkingSpaceModel.index({ geo_location: "2dsphere" });
-const CoworkingSpace = mongoose.model("CoworkingSpace", coworkingSpaceModel);
-module.exports = CoworkingSpace;
+builderProjectModel.index({ geo_location: "2dsphere" });
+const BuilderProject = mongoose.model("BuilderProject", builderProjectModel);
+module.exports = BuilderProject;

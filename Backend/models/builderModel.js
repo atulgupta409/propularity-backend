@@ -1,31 +1,39 @@
 const mongoose = require("mongoose");
 
-const brandModel = mongoose.Schema(
+const builderModel = mongoose.Schema(
   {
     name: { type: String, unique: true, required: true },
     description: String,
-    order: { type: Number, default: 0 },
-    should_show_on_home: {
+    starting_price: String,
+    configuration: String,
+    estb_year: Number,
+    ratings: Number,
+    type: String,
+    residential_num: Number,
+    commercial_num: Number,
+    coming_soon: String,
+    slug: String,
+    is_active: {
       type: Boolean,
       default: false,
     },
-    type: {
-      type: String,
-      enum: ["coworking", "virtual office", "officespace"],
-      default: "coworking",
-    },
-    image: String,
-    featureImage: String,
+    images: [
+      {
+        image: String,
+        name: String,
+        alt: String,
+      },
+    ],
+    BuilderLogo: String,
     cities: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "City",
       },
     ],
-    slug: String,
     seo: {
-      title: { type: String, required: true },
-      description: { type: String, required: true },
+      title: { type: String },
+      description: { type: String },
       footer_title: String,
       footer_description: String,
       robots: String,
@@ -51,5 +59,5 @@ const brandModel = mongoose.Schema(
   }
 );
 
-const Brand = mongoose.model("Brand", brandModel);
-module.exports = Brand;
+const Builder = mongoose.model("Builder", builderModel);
+module.exports = Builder;
