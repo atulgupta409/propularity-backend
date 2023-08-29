@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const BuilderProject = require("../../models/builderProjectModel");
-
+const City = require("../../models/cityModel")
+const MicroLocation = require("../../models/microLocationModel")
 const postBuilderProjects = asyncHandler(async (req, res) => {
   const {
     name,
@@ -200,6 +201,571 @@ const getProjectsById = asyncHandler(async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 });
+
+const topProjectsOrder = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order, status, cityId } = req.body;
+
+    // Find the coworking project to be updated
+    const projectsToUpdate = await BuilderProject.findById(id);
+
+    if (!projectsToUpdate) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const currentOrder = projectsToUpdate.is_popular.order;
+    if (projectsToUpdate.location.city.toString() !== cityId) {
+      return res.status(400).json({
+        error: "project does not belong to the specified city",
+      });
+    }
+    if (status === false && order === 1000) {
+      // Deactivate priority for the current coworking project
+      projectsToUpdate.is_popular.status = false;
+      projectsToUpdate.is_popular.order = order;
+      await projectsToUpdate.save();
+
+      // Decrement the higher order coworking projects by one
+      await BuilderProject.updateMany(
+        {
+          "location.city": cityId,
+          _id: { $ne: id }, // Exclude the current coworking project
+          "is_popular.order": { $gt: currentOrder }, // Higher order workprojects
+          "is_popular.status": true,
+        },
+        { $inc: { "is_popular.order": -1 } }
+      );
+    } else {
+      // Update the priority of the coworking project to the specified order
+      projectsToUpdate.is_popular.order = order;
+
+      // Update the "is_active" field based on the specified order
+      projectsToUpdate.is_popular.status = order !== 1000;
+
+      await projectsToUpdate.save();
+    }
+
+    res.json(projectsToUpdate);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+})
+
+const topProjectsOrderByDrag = asyncHandler(async (req, res) => {
+  try {
+    const updatedProjects = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updatedProjects array and update each coworking project in the database
+    for (const project of updatedProjects) {
+      const { _id, is_popular } = project;
+      // Find the coworking project by its _id and update its priority order
+      await BuilderProject.findByIdAndUpdate(_id, {
+        $set: {
+          "is_popular.order": is_popular.order,
+          "is_popular.status": is_popular.order !== 1000,
+        },
+      });
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating priority" });
+  }
+})
+
+const getProjectsbyCityId = asyncHandler(async (req, res) => {
+  const { cityId } = req.params;
+
+  try {
+    const topProjects = await BuilderProject.find({
+      "location.city": cityId,
+      status: "approve",
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .exec();
+
+    res.json(topProjects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+const getTopProjectbyCity = asyncHandler(async (req, res) => {
+  const {city} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      "location.city": city,
+      status: "approve",
+      "is_popular.order": { $nin: [0, 1000] },
+    }).populate("location.city", "name")
+    .populate("location.micro_location", "name")
+    .sort({ "is_popular.order": 1 }) // Sort by priority.order in ascending order
+    .exec();
+
+  res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+const getProjectsbyMicrolocation = asyncHandler(async (req, res) => {
+  const {id} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      "location.micro_location": id,
+      status: "approve",
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .select("name priority")
+      .exec();
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+
+const changeProjectOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order, is_active, microlocationId } = req.body;
+
+    const projectToUpdate = await BuilderProject.findById(id);
+  
+    if (!projectToUpdate) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    
+    const currentPriority = projectToUpdate.priority.find(
+      (priority) => 
+        priority.microlocationId && priority.microlocationId.toString() === microlocationId &&
+        priority.is_active
+    );
+    let currentOrder = currentPriority ? currentPriority.order : 1000;
+    // Check if the microlocationId exists in projectToUpdate's location
+    if (
+      !projectToUpdate.location.micro_location.some((micro) =>
+        micro._id.toString().includes(microlocationId)
+      )
+    ) {
+      return res.status(400).json({
+        error: "None of the project match the specified plan types",
+      });
+    }
+
+    if (is_active === false && order === 1000) {
+      projectToUpdate.priority.forEach((priority) => {
+        if (priority.microlocationId && priority.microlocationId.toString() === microlocationId) {
+          priority.order = order;
+          priority.is_active = false;
+        }
+      });
+      await projectToUpdate.save();
+
+      const otherProjects = await BuilderProject.find({
+        _id: { $ne: id },
+        "location.micro_location": microlocationId,
+        "priority.is_active": true,
+      });
+
+      const projectIdsToUpdate = otherProjects
+        .filter((otherProject) => {
+          return otherProject.priority.some(priority => {
+             if (priority.microlocationId && priority.microlocationId.toString() === microlocationId) {
+             return (priority.order > currentOrder && priority.order !== 1000);
+            }
+          });
+        });
+      for (const otherProject of projectIdsToUpdate) {
+        otherProject.priority.forEach((priority) => {
+          if (priority.microlocationId && priority.microlocationId.toString() === microlocationId) {
+            priority.order = priority.order - 1;
+          }
+        });
+      
+        otherProject.markModified('priority'); // Mark the field as modified
+        await otherProject.save();
+      }    
+    } else {
+      let existingPriorityFound = false;
+      projectToUpdate.priority.forEach((priority) => {
+        if (priority.microlocationId && priority.microlocationId.toString() === microlocationId) {
+          priority.order = order;
+          priority.is_active = order !== 1000;
+          priority.microlocationId = microlocationId,
+          existingPriorityFound = true;
+        }
+      });
+      if (!existingPriorityFound) {
+        projectToUpdate.priority.push({
+          is_active: is_active,
+          order: order,
+          microlocationId: microlocationId,
+        });
+        projectToUpdate.markModified('priority'); // Mark the field as modified
+      }
+      await projectToUpdate.save();
+    }
+    
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error occurred:", error); 
+    res.status(500).json({ error: "An error occurred" });
+  }
+};
+
+
+const getProjectbyMicrolocationWithPriority = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      "location.micro_location": id,
+      status: "approve",
+      "priority.microlocationId": id,
+    })
+    .populate("location.city", "name")
+    .populate("location.micro_location", "name")
+    .select("name priority")
+    .exec();
+
+    const filteredProjects = projects.filter((otherProject) => {
+      return otherProject.priority.some((priority) => {
+        if (
+          priority.microlocationId &&
+          priority.microlocationId.toString() === id
+        ) {
+          return priority.order !== 1000;
+        }
+      });
+    });
+    filteredProjects.sort((a, b) => {
+      const priorityA = a.priority.find(
+        (priority) =>
+          priority.microlocationId &&
+          priority.microlocationId.toString() === id
+      );
+      const priorityB = b.priority.find(
+        (priority) =>
+          priority.microlocationId &&
+          priority.microlocationId.toString() === id
+      );
+    
+      return priorityA.order - priorityB.order;
+    });
+      res.json(filteredProjects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+const changeProjectOrderbyDrag = asyncHandler(async (req, res) => {
+  try {
+    const updatedProjects = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updatedProjects array and update each project in the database
+    for (const project of updatedProjects) {
+      const { _id, priority } = project;
+
+      // Find the project by its _id
+      const existingProject = await BuilderProject.findById(_id);
+
+      // Find the index of the priority object within the priority array
+      const priorityIndex = existingProject.priority.findIndex(
+        (p) => p.microlocationId.toString() === priority.microlocationId
+      );
+
+      if (priorityIndex !== -1) {
+        // Update the order and is_active fields for the specific priority object
+        existingProject.priority[priorityIndex].order = priority.order;
+        existingProject.priority[priorityIndex].is_active =
+          priority.order !== 1000;
+
+        // Save the updated project
+        await existingProject.save();
+      }
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating priority" });
+  }
+});
+
+const searchProjects = asyncHandler(async(req, res) => {
+  try {
+    const { name, city, microlocation, status } = req.query;
+
+    const query = {};
+
+    if (name) {
+      query.name = { $regex: name, $options: "i" };
+    }
+
+    if (city) {
+      const cities = await City.findOne({ name: { $regex: `^${city}`, $options: 'i' } });
+      if(cities) {
+        query["location.city"] = cities._id
+      }
+    }
+
+    if (microlocation) {
+       const micro = await MicroLocation.findOne({ name: { $regex: `\\b${microlocation}`, $options: 'i' } });
+      if(micro){
+        query["location.micro_location"] = micro._id;
+      }
+    }else{
+      return [];
+    }
+
+
+    if (status) {
+      query.project_status = status;
+    }
+
+    const projects = await BuilderProject.find(query)
+    .populate("location.city", "name")
+    .populate("location.micro_location", "name")
+    .exec();;
+
+    res.json(projects);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "An error occurred while processing your request." });
+  }
+})
+const getProjectsbyBuilder = asyncHandler(async(req, res) => {
+  const {id} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      builder: id,
+      status: "approve",
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .exec();
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+const changeBuilderProjectOrder = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order, is_active, builder } = req.body;
+
+    // Find the coworking project to be updated
+    const projectToUpdate = await BuilderProject.findById(id);
+
+    if (!projectToUpdate) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const currentOrder = projectToUpdate.builder_priority.order;
+    if (
+      projectToUpdate.builder.toString() !==
+      builder
+    ) {
+      return res.status(400).json({
+        error: "project does not belong to the specified builder",
+      });
+    }
+    if (is_active === false && order === 1000) {
+      // Deactivate priority for the current project
+      projectToUpdate.builder_priority.is_active = false;
+      projectToUpdate.builder_priority.order = order;
+      await projectToUpdate.save();
+
+      // Decrement the higher order project by one
+      await BuilderProject.updateMany(
+        {
+          builder: builder,
+          _id: { $ne: id }, // Exclude the current project
+          "builder_priority.order": { $gt: currentOrder }, // Higher order project
+          "builder_priority.is_active": true,
+        },
+        { $inc: { "builder_priority.order": -1 } }
+      );
+    } else {
+      // Update the priority of the project to the specified order
+      projectToUpdate.builder_priority.order = order;
+
+      // Update the "is_active" field based on the specified order
+      projectToUpdate.builder_priority.is_active = order !== 1000;
+
+      await projectToUpdate.save();
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+})
+const changeBuilderProjectOrderbyDrag = asyncHandler(async(req, res) => {
+  try {
+    const updatedProjects = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updatedProjects array and update each project in the database
+    for (const project of updatedProjects) {
+      const { _id, builder_priority } = project;
+      // Find the project by its _id and update its priority order
+      await BuilderProject.findByIdAndUpdate(_id, {
+        $set: {
+          "builder_priority.order": builder_priority.order,
+          "builder_priority.is_active": builder_priority.order !== 1000,
+        },
+      });
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating priority" });
+  }
+})
+const getProjectbyByBuilderWithPriority = asyncHandler(async(req, res) => {
+  const {id} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      builder: id,
+      status: "approve",
+      "builder_priority.order": { $nin: [0, 1000] }, // Exclude documents with priority.order equal to 1000
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .sort({ "builder_priority.order": 1 }) // Sort by priority.order in ascending order
+      .exec();
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+const getProjectsbyPlans = asyncHandler(async(req, res) => {
+  const {id} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      "plans.category": id,
+      status: "approve",
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .exec();
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
+ const changePlansProjectOrder = asyncHandler(async(req, res) => {
+  try {
+    const { id } = req.params;
+    const { order, is_active, plans_type } = req.body;
+
+    // Find the coworking project to be updated
+    const projectToUpdate = await BuilderProject.findById(id);
+
+    if (!projectToUpdate) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    const currentOrder = projectToUpdate.plans_priority.order;
+    const planTypesArray = plans_type.split(','); // Convert the planTypes string to an array
+
+    if (!projectToUpdate.plans.some(plan => plan.category.toString().includes(plans_type))) {
+      return res.status(400).json({
+        error: "None of the project plans match the specified plan types",
+      });
+    }
+
+    if (is_active === false && order === 1000) {
+      // Deactivate priority for the current project
+      projectToUpdate.plans_priority.is_active = false;
+      projectToUpdate.plans_priority.order = order;
+      await projectToUpdate.save();
+
+      // Decrement the higher order project by one
+      await BuilderProject.updateMany(
+        {
+          "plans.category": plans_type,
+          _id: { $ne: id }, // Exclude the current project
+          "plans_priority.order": { $gt: currentOrder }, // Higher order project
+          "plans_priority.is_active": true,
+        },
+        { $inc: { "plans_priority.order": -1 } }
+      );
+    } else {
+      // Update the priority of the project to the specified order
+      projectToUpdate.plans_priority.order = order;
+
+      // Update the "is_active" field based on the specified order
+      projectToUpdate.plans_priority.is_active = order !== 1000;
+
+      await projectToUpdate.save();
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+ })
+ const changePlansProjectOrderbyDrag = asyncHandler(async(req, res) => {
+  try {
+    const updatedProjects = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updatedProjects array and update each project in the database
+    for (const project of updatedProjects) {
+      const { _id, plans_priority } = project;
+      // Find the project by its _id and update its priority order
+      await BuilderProject.findByIdAndUpdate(_id, {
+        $set: {
+          "plans_priority.order": plans_priority.order,
+          "plans_priority.is_active": plans_priority.order !== 1000,
+        },
+      });
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating priority" });
+  }
+ })
+ const  getProjectbyByPlansWithPriority = asyncHandler(async (req, res) => {
+  const {id} = req.params;
+
+  try {
+    const projects = await BuilderProject.find({
+      "plans.category": id,
+      status: "approve",
+      "plans_priority.order": { $nin: [0, 1000] }, // Exclude documents with priority.order equal to 1000
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .sort({ "plans_priority.order": 1 }) // Sort by priority.order in ascending order
+      .exec();
+
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+ })
 module.exports = {
   postBuilderProjects,
   getProjects,
@@ -207,4 +773,21 @@ module.exports = {
   changeProjectStatus,
   getProjectsById,
   editProjects,
+  topProjectsOrder,
+  topProjectsOrderByDrag,
+  getTopProjectbyCity,
+  getProjectsbyCityId,
+  getProjectsbyMicrolocation,
+  changeProjectOrder,
+  getProjectbyMicrolocationWithPriority,
+  changeProjectOrderbyDrag,
+  searchProjects,
+  getProjectsbyBuilder,
+  changeBuilderProjectOrder,
+  changeBuilderProjectOrderbyDrag,
+  getProjectbyByBuilderWithPriority,
+  getProjectsbyPlans,
+  changePlansProjectOrder,
+  changePlansProjectOrderbyDrag,
+  getProjectbyByPlansWithPriority
 };

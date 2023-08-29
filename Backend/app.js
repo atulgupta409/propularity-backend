@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-
 const connectDB = require("./config/db");
 const { notFound, errorHandle } = require("./middleware/errorMiddleware");
 const userRoute = require("./routes/admin/userRoutes");
@@ -23,11 +22,14 @@ const ourClientRouter = require("./routes/admin/ourClientRoutes");
 const clientRouter = require("./routes/client/ourClientsRoutes");
 const clientSeoRouter = require("./routes/client/seoRoutes");
 // const clientBrandRouter = require("./routes/client/brandRoutes");
+const { graphqlHTTP } = require('express-graphql');
+const schema = require('./schema');
 const app = express();
 const AWS = require("aws-sdk");
 const contactFormRouter = require("./routes/client/contactFormRouter");
 require("dotenv").config();
 connectDB();
+
 
 // -----------------aws-s3------------------------
 const s3Client = new AWS.S3({
@@ -40,7 +42,13 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
 app.use(contactFormRouter);
-
+app.use(
+  '/graphql',
+  graphqlHTTP({
+    schema,
+    graphiql: true,
+  })
+);
 const multer = require("multer");
 
 const storage = multer.memoryStorage();
@@ -50,7 +58,6 @@ const allowedFormats = ["image/jpeg", "image/png", "image/svg+xml"];
 
 app.post("/upload-image", upload.array("files"), (req, res) => {
   const promiseArray = [];
-
   req.files.forEach((file) => {
     // Check if the file format is allowed
     if (allowedFormats.includes(file.mimetype)) {
@@ -60,7 +67,6 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
         Key: `image-${Date.now()}.${file.originalname.split(".").pop()}`,
         Body: file.buffer,
       };
-
       const putObjectPromise = s3Client.upload(params).promise();
       promiseArray.push(putObjectPromise);
     } else {
@@ -87,6 +93,7 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 // -----------------aws-s3------------------------
+
 app.use("/api/user", userRoute);
 app.use("/api/allCountry", countryRoute);
 app.use("/api/state", stateRoute);
