@@ -10,7 +10,7 @@ const cityModel = mongoose.Schema(
     },
     state: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "State",
+      ref: "State", 
     },
     active: {
       type: Boolean,

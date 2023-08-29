@@ -38,10 +38,12 @@ const builderProjectModel = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "City",
       },
-      micro_location: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "MicroLocation",
-      },
+      micro_location:[
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "MicroLocation",
+        },
+      ],
       latitude: Number,
       longitude: Number,
       is_near_metro: {
@@ -161,7 +163,7 @@ const builderProjectModel = mongoose.Schema(
       default: "pending",
     },
 
-    priority: {
+    priority: [{
       is_active: {
         type: Boolean,
         default: false,
@@ -174,7 +176,7 @@ const builderProjectModel = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "MicroLocation",
       },
-    },
+    }],
     is_popular: {
       status: {
         type: Boolean,
@@ -187,6 +189,34 @@ const builderProjectModel = mongoose.Schema(
       cityId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "City",
+      },
+    },
+    builder_priority: {
+      is_active: {
+        type: Boolean,
+        default: false,
+      },
+      order: {
+        type: Number,
+        default: 1000,
+      },
+      builder: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Builder",
+      },
+    },
+    plans_priority: {
+      is_active: {
+        type: Boolean,
+        default: false,
+      },
+      order: {
+        type: Number,
+        default: 1000,
+      },
+      plans_type: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "PropertyType",
       },
     },
   },
