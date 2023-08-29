@@ -472,7 +472,7 @@ const changeProjectOrderbyDrag = asyncHandler(async (req, res) => {
     // Loop through the updatedProjects array and update each project in the database
     for (const project of updatedProjects) {
       const { _id, priority } = project;
-
+      
       // Find the project by its _id
       const existingProject = await BuilderProject.findById(_id);
 
@@ -553,6 +553,7 @@ const getProjectsbyBuilder = asyncHandler(async(req, res) => {
     })
       .populate("location.city", "name")
       .populate("location.micro_location", "name")
+      .select("name builder_priority")
       .exec();
 
     res.json(projects);
@@ -665,6 +666,7 @@ const getProjectsbyPlans = asyncHandler(async(req, res) => {
     })
       .populate("location.city", "name")
       .populate("location.micro_location", "name")
+      .select("name plans_priority")
       .exec();
 
     res.json(projects);
