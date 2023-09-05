@@ -92,7 +92,8 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
-// -----------------aws-s3------------------------
+
+//-----------------aws-s3------------------------
 
 app.use("/api/user", userRoute);
 app.use("/api/allCountry", countryRoute);
