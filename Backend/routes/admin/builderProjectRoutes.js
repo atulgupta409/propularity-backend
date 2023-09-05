@@ -23,17 +23,17 @@ const {
   getProjectsbyPlans,
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
-  getProjectbyByPlansWithPriority
+  getProjectbyByPlansWithPriority,
 } = require("../../controllers/admin/builderProjectController");
 const router = express.Router();
 
 router
   .post("/", protect, postBuilderProjects)
-  .get("/projects",protect, getProjects)
-  .get("/projects/:id",protect, getProjectsById)
-  .delete("/delete/:id",protect, deleteProjects)
+  .get("/projects", protect, getProjects)
+  .get("/projects/:id", protect, getProjectsById)
+  .delete("/delete/:id", protect, deleteProjects)
   .put("/changeStatus/:id", protect, changeProjectStatus)
-  .put("/edit-project/:id",protect, editProjects)
+  .put("/edit-project/:id", protect, editProjects)
   .put("/top-projects/:id", protect, topProjectsOrder)
   .put("/update-top-projects", protect, topProjectsOrderByDrag)
   .get(
@@ -67,5 +67,5 @@ router
     "/plans-projects/:id",
 
     getProjectbyByPlansWithPriority
-  );;
+  );
 module.exports = router;
