@@ -38,7 +38,7 @@ const builderProjectModel = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "City",
       },
-      micro_location:[
+      micro_location: [
         {
           type: mongoose.Schema.Types.ObjectId,
           ref: "MicroLocation",
@@ -163,20 +163,22 @@ const builderProjectModel = mongoose.Schema(
       default: "pending",
     },
 
-    priority: [{
-      is_active: {
-        type: Boolean,
-        default: false,
+    priority: [
+      {
+        is_active: {
+          type: Boolean,
+          default: false,
+        },
+        order: {
+          type: Number,
+          default: 1000,
+        },
+        microlocationId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "MicroLocation",
+        },
       },
-      order: {
-        type: Number,
-        default: 1000,
-      },
-      microlocationId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "MicroLocation",
-      },
-    }],
+    ],
     is_popular: {
       status: {
         type: Boolean,
