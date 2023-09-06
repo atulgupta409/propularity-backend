@@ -35,7 +35,7 @@ router
   .get("/projects/:id",protect, getProjectsById)
   .delete("/delete/:id",protect, deleteProjects)
   .put("/changeStatus/:id", protect, changeProjectStatus)
-  .put("/edit-project/:id",protect, editProjects)
+  .put("/edit-project/:id", protect, editProjects)
   .put("/top-projects/:id", protect, topProjectsOrder)
   .put("/update-top-projects", protect, topProjectsOrderByDrag)
   .get(
