@@ -24,14 +24,16 @@ const {
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,
+  getProjectsWithPagination
 } = require("../../controllers/admin/builderProjectController");
 const router = express.Router();
 
 router
   .post("/", protect, postBuilderProjects)
-  .get("/projects", protect, getProjects)
-  .get("/projects/:id", protect, getProjectsById)
-  .delete("/delete/:id", protect, deleteProjects)
+  .get("/projects",protect, getProjects)
+  .get("/projects-page", getProjectsWithPagination)
+  .get("/projects/:id",protect, getProjectsById)
+  .delete("/delete/:id",protect, deleteProjects)
   .put("/changeStatus/:id", protect, changeProjectStatus)
   .put("/edit-project/:id", protect, editProjects)
   .put("/top-projects/:id", protect, topProjectsOrder)

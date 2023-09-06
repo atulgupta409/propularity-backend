@@ -46,6 +46,8 @@ const builderProjectModel = mongoose.Schema(
       ],
       latitude: Number,
       longitude: Number,
+      latitude2: Number,
+      longitude2: Number,
       is_near_metro: {
         type: Boolean,
         default: false,
@@ -207,7 +209,7 @@ const builderProjectModel = mongoose.Schema(
         ref: "Builder",
       },
     },
-    plans_priority: {
+    plans_priority: [{
       is_active: {
         type: Boolean,
         default: false,
@@ -220,7 +222,7 @@ const builderProjectModel = mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "PropertyType",
       },
-    },
+    }],
   },
   {
     timestamps: true,

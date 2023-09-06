@@ -161,6 +161,34 @@ const getProjects = asyncHandler(async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+const getProjectsWithPagination = asyncHandler(async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; // Current page number
+    const limit = parseInt(req.query.limit) || 10;
+    const totalCount = await BuilderProject.countDocuments();
+    const totalPages = Math.ceil(totalCount / limit);
+    const projects = await BuilderProject.find()
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .skip((page - 1) * limit) // Skip results based on page number
+      .limit(limit) // Limit the number of results per page
+      .exec();
+
+      
+    if (!projects) {
+      return res.status(404).json({ message: "project not found" });
+    }
+
+    res.json({
+      totalPages,
+      totalCount,
+      currentPage: page,
+      projects,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 const deleteProjects = asyncHandler(async (req, res) => {
   const { id } = req.params;
   await BuilderProject.findByIdAndDelete(id)
@@ -338,7 +366,7 @@ const changeProjectOrder = async (req, res) => {
     const { order, is_active, microlocationId } = req.body;
 
     const projectToUpdate = await BuilderProject.findById(id);
-
+      
     if (!projectToUpdate) {
       return res.status(404).json({ error: "Project not found" });
     }
@@ -530,36 +558,42 @@ const searchProjects = asyncHandler(async (req, res) => {
     }
 
     if (microlocation) {
-      const micro = await MicroLocation.findOne({
-        name: { $regex: `\\b${microlocation}`, $options: "i" },
-      });
-      if (micro) {
+       const micro = await MicroLocation.findOne({ name: { $regex: `^${microlocation}`, $options: 'i' } });
+      if(micro){
         query["location.micro_location"] = micro._id;
       }
-    } else {
-      return [];
     }
 
     if (status) {
-      query.project_status = status;
+      query.status = status;
     }
-
+    const page = parseInt(req.query.page) || 1; // Current page number
+    const limit = parseInt(req.query.limit) || 10;
+    const totalCount = await BuilderProject.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
     const projects = await BuilderProject.find(query)
-      .populate("location.city", "name")
-      .populate("location.micro_location", "name")
-      .exec();
+    .populate("location.city", "name")
+    .populate("location.micro_location", "name")
+    .skip((page - 1) * limit) 
+    .limit(limit) 
+    .exec();
 
-    res.json(projects);
+    res.json({
+      totalPages,
+      totalCount,
+      currentPage: page,
+      projects,
+    });
   } catch (error) {
     console.error(error);
     res
       .status(500)
       .json({ error: "An error occurred while processing your request." });
   }
-});
-const getProjectsbyBuilder = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
+})
+const getProjectsbyBuilder = asyncHandler (async(req, res) => {
+  const {id} = req.params;
+  
   try {
     const projects = await BuilderProject.find({
       builder: id,
@@ -691,7 +725,7 @@ const changePlansProjectOrder = asyncHandler(async (req, res) => {
     const { order, is_active, plans_type } = req.body;
 
     const projectToUpdate = await BuilderProject.findById(id);
-
+    
     if (!projectToUpdate) {
       return res.status(404).json({ error: "Project not found" });
     }
@@ -876,4 +910,5 @@ module.exports = {
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,
+  getProjectsWithPagination
 };
