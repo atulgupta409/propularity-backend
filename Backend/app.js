@@ -90,7 +90,7 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("API is running for propularity...");
 });
 
 //-----------------aws-s3------------------------
