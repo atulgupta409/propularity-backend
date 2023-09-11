@@ -32,6 +32,7 @@ connectDB();
 
 
 // -----------------aws-s3------------------------
+
 const s3Client = new AWS.S3({
   accessKeyId: process.env.ACCESS_KEY,
   secretAccessKey: process.env.SECRET_KEY,
