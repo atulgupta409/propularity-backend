@@ -5,6 +5,7 @@ const ProjectType = require("./graphqlTypes/projectType")
 const BuilderProject = require("./models/builderProjectModel")
 const City = require("./models/cityModel");
 const MicroLocation = require('./models/microLocationModel');
+const { MicroLocationType } = require('./graphqlTypes/locationType');
 
 const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
@@ -107,7 +108,21 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    
+    microlocations: {
+      type: GraphQLList(MicroLocationType),
+      args: {
+        city: { type: GraphQLString }
+      },
+      async resolve(parent, args) {
+        try {
+          const city = await City.findOne({name: { $regex: args.city, $options: 'i' }})
+        return await MicroLocation.find({city: city._id})
+        } catch (error) {
+          console.error('Error in microlocation resolver:', error);
+          throw error;
+        }
+      },
+    },
     
   },
 });

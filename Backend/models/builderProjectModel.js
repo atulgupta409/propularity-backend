@@ -8,6 +8,10 @@ const builderProjectModel = mongoose.Schema(
       ref: "Builder",
     },
     project_type: String,
+    plans_type: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PropertyType",
+    },
     slug: String,
     starting_price: String,
     configuration: String,
