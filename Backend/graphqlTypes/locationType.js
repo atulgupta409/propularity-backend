@@ -75,9 +75,9 @@ const {
       _id: { type: GraphQLID },
       name: { type: GraphQLString },
       description: { type: GraphQLString },
-      country: { type: GraphQLList(CountryType) }, // You might want to use the CountryType here
-      state: { type: GraphQLList(StateType) }, // You might want to use the StateType here
-      city: { type: GraphQLList(CityType) }, // You might want to use the CityType here
+      country: { type: CountryType },
+      state: { type: StateType },
+      city: { type: CityType }, // Use CityType here
       active: { type: GraphQLBoolean },
       priority: {
         type: new GraphQLObjectType({
@@ -85,7 +85,7 @@ const {
           fields: {
             is_active: { type: GraphQLBoolean },
             order: { type: GraphQLString },
-            city: { type: GraphQLList(CityType) }, // You might want to use the CityType here
+            city: { type: CityType }, // Use CityType here
           },
         }),
       },
@@ -93,6 +93,7 @@ const {
       updatedAt: { type: GraphQLString },
     },
   });
+  
   
 
   module.exports = {CityType, StateType, CountryType, MicroLocationType}
