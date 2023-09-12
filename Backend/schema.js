@@ -64,50 +64,6 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    searchProjects: {
-      type: GraphQLList(ProjectType),
-      args: {
-        name: { type: GraphQLString },
-        city: { type: GraphQLString },
-        microlocation: { type: GraphQLString },
-        status: {type: GraphQLString}
-      },
-      async resolve(parent, args) {
-        const searchCriteria = {};
-  
-        if (args.name) {
-          searchCriteria.name = { $regex: args.name, $options: 'i' };
-        }
-        if (args.city) {
-          const city = await City.findOne({ name: { $regex: args.city, $options: 'i' } });
-          if (city) {
-            searchCriteria['location.city'] = city._id;
-          }else {
-            // Return empty array when city doesn't match any cities
-            return [];
-          }
-        }
-        if (args.microlocation) {
-          const microlocation = await MicroLocation.findOne({ name: { $regex: args.microlocation, $options: 'i' } });
-          if (microlocation) {
-            searchCriteria['location.micro_location'] = microlocation._id;
-          }else {
-            // Return empty array when city doesn't match any cities
-            return [];
-          }
-        }
-        if (args.status) {
-          searchCriteria.status = args.status;
-        }
-        try {
-          const searchResults = await BuilderProject.find(searchCriteria);
-          return searchResults;
-        } catch (error) {
-          console.error('Error in searchProjects resolver:', error);
-          throw error;
-        }
-      },
-    },
     microlocations: {
       type: GraphQLList(MicroLocationType),
       args: {
@@ -115,7 +71,7 @@ const RootQuery = new GraphQLObjectType({
       },
       async resolve(parent, args) {
         try {
-          const city = await City.findOne({name: { $regex: args.city, $options: 'i' }})
+          const city = await City.findOne({name: { $regex: args.city, $options: 'i' }, active: true})
         return await MicroLocation.find({city: city._id})
         } catch (error) {
           console.error('Error in microlocation resolver:', error);
@@ -123,7 +79,21 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    
+    allmicrolocations: {
+      type: GraphQLList(MicroLocationType),
+      async resolve(parent, args) {
+        try {
+        const microlocations =  await MicroLocation.find({active: true})
+        .populate('city', 'name')
+        .exec(); // Add .exec() to execute the query
+
+      return microlocations;
+        } catch (error) {
+          console.error('Error in microlocation resolver:', error);
+          throw error;
+        }
+      },
+    },
   },
 });
 module.exports = new GraphQLSchema({
