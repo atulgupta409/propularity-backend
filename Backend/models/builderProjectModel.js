@@ -94,7 +94,7 @@ const builderProjectModel = mongoose.Schema(
         },
         size: String,
         size_sq: String,
-        price: Number,
+        price: String,
         image: [],
         should_show: {
           type: Boolean,
