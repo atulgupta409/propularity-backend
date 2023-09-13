@@ -38,10 +38,12 @@ const s3Client = new AWS.S3({
   secretAccessKey: process.env.SECRET_KEY,
   region: process.env.REGION,
 });
-
+const corsOptions = {
+  origin: 'http://admin.propularity.in',
+};
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(contactFormRouter);
 app.use(
   '/graphql',
