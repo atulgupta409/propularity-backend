@@ -26,9 +26,12 @@ const RootQuery = new GraphQLObjectType({
     },
     projects: {
       type: GraphQLList(ProjectType),
+      args: {
+        slug: {type: GraphQLString}
+      },
       async resolve(parent, args) {
         try {
-        return await BuilderProject.find({status: "approve"})
+        return await BuilderProject.find({slug: args.slug, status: "approve"})
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
           throw error;
