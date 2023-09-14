@@ -35,7 +35,7 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    builderProjects: {
+    builderProjectsByLocation: {
       type: PaginatedBuilderProjectsType,
       args: {
         page: { type: GraphQLInt },
@@ -48,9 +48,10 @@ const RootQuery = new GraphQLObjectType({
           const perPage = args.perPage || 10;
 
           const skip = (page - 1) * perPage;
-
-          const totalCount = await BuilderProject.countDocuments({});
           const location = await MicroLocation.find({name: { $regex: args.location, $options: 'i' }})
+          const totalCount = await BuilderProject.countDocuments({"location.micro_location": location[0]._id,
+          "priority.microlocationId": location[0]._id, status: "approve",});
+          
            
           const projects = await BuilderProject.find({"location.micro_location": location[0]._id,
            "priority.microlocationId": location[0]._id, status: "approve",})
