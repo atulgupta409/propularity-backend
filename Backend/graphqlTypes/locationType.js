@@ -51,8 +51,8 @@ const {
       _id: { type: GraphQLID },
       name: { type: GraphQLString },
       description: { type: GraphQLString },
-      country: { type: GraphQLList(CountryType) }, // You might want to use the CountryType here
-      state: { type: GraphQLList(StateType) }, // You might want to use the StateType here
+      country: { type: CountryType }, // You might want to use the CountryType here
+      state: { type: StateType }, // You might want to use the StateType here
       active: { type: GraphQLBoolean },
       priority: {
         type: new GraphQLObjectType({
@@ -60,7 +60,7 @@ const {
           fields: {
             is_active: { type: GraphQLBoolean },
             order: { type: GraphQLString },
-            state: { type: GraphQLList(StateType) }, // You might want to use the StateType here
+            state: { type: StateType }, // You might want to use the StateType here
           },
         }),
       },
