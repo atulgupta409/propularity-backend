@@ -108,7 +108,7 @@ const LocationType = new GraphQLObjectType({
       }, // You might want to use a CategoryType here
       size: { type: GraphQLString },
       size_sq: { type: GraphQLString },
-      price: { type: GraphQLFloat },
+      price: { type: GraphQLString },
       image: { type: GraphQLList(GraphQLString) },
       should_show: { type: GraphQLBoolean },
     },

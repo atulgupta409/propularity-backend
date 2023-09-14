@@ -24,7 +24,7 @@ const RootQuery = new GraphQLObjectType({
         return Amenity.find({});
       },
     },
-    projects: {
+    projectDetails: {
       type: GraphQLList(ProjectType),
       args: {
         slug: {type: GraphQLString}
