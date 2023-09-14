@@ -11,7 +11,7 @@ const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
   fields: () => ({
     totalCount: { type: GraphQLInt },
-    results: { type: GraphQLList(ProjectType) },
+    filteredProjects: { type: GraphQLList(ProjectType) },
   }),
 });
 
@@ -28,7 +28,7 @@ const RootQuery = new GraphQLObjectType({
       type: GraphQLList(ProjectType),
       async resolve(parent, args) {
         try {
-        return await BuilderProject.find({})
+        return await BuilderProject.find({status: "approve"})
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
           throw error;
@@ -40,6 +40,7 @@ const RootQuery = new GraphQLObjectType({
       args: {
         page: { type: GraphQLInt },
         perPage: { type: GraphQLInt },
+        location: {type: GraphQLString}
       },
       async resolve(parent, args) {
         try {
@@ -49,14 +50,40 @@ const RootQuery = new GraphQLObjectType({
           const skip = (page - 1) * perPage;
 
           const totalCount = await BuilderProject.countDocuments({});
-
-          const results = await BuilderProject.find({})
+          const location = await MicroLocation.find({name: { $regex: args.location, $options: 'i' }})
+           
+          const projects = await BuilderProject.find({"location.micro_location": location[0]._id,
+           "priority.microlocationId": location[0]._id, status: "approve",})
             .skip(skip)
             .limit(perPage);
+         
+            const filteredProjects = projects.filter((otherProject) => {
+              return otherProject.priority.some((priority) => {
+                if (
+                  priority.microlocationId &&
+                  priority.microlocationId.toString() === location[0]._id.toString()
+                ) {
+                  return priority.order !== 1000;
+                }
+              });
+            });
+          
+            filteredProjects.sort((a, b) => {
+              const priorityA = a.priority.find(
+                (priority) =>
+                  priority.microlocationId && priority.microlocationId.toString() === location[0]._id.toString()
+              );
+              const priorityB = b.priority.find(
+                (priority) =>
+                  priority.microlocationId && priority.microlocationId.toString() === location[0]._id.toString()
+              );
+        
+              return priorityA.order - priorityB.order;
+            });
 
           return {
             totalCount,
-            results,
+            filteredProjects,
           };
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
