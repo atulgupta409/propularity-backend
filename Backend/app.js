@@ -21,7 +21,6 @@ const clientStateRoutes = require("./routes/client/stateRoutes");
 const ourClientRouter = require("./routes/admin/ourClientRoutes");
 const clientRouter = require("./routes/client/ourClientsRoutes");
 const clientSeoRouter = require("./routes/client/seoRoutes");
-// const clientBrandRouter = require("./routes/client/brandRoutes");
 const { graphqlHTTP } = require('express-graphql');
 const schema = require('./schema');
 const app = express();
@@ -38,14 +37,15 @@ const s3Client = new AWS.S3({
   secretAccessKey: process.env.SECRET_KEY,
   region: process.env.REGION,
 });
-const corsOptions = {
-  origin: 'http://admin.propularity.in',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-};
+// const corsOptions = {
+//   origin: 'http://admin.propularity.in',
+//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//   credentials: true,
+// };
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors(corsOptions));
+app.use(express.static('public'));
+app.use(cors());
 app.use(contactFormRouter);
 app.use(
   '/graphql',
@@ -118,7 +118,6 @@ app.use("/api", clientStateRoutes);
 app.use("/api", clientcountryRoutes);
 app.use("/api/client", clientRouter);
 app.use("/api/seo", clientSeoRouter);
-// app.use("/api/brands", clientBrandRouter);
 app.use(notFound);
 app.use(errorHandle);
 

@@ -710,7 +710,7 @@ const getProjectsbyPlans = asyncHandler(async (req, res) => {
 
   try {
     const projects = await BuilderProject.find({
-      "plans.category": id,
+      plans_type: id,
       status: "approve",
     })
       .populate("location.city", "name")
@@ -758,7 +758,7 @@ const changePlansProjectOrder = asyncHandler(async (req, res) => {
 
       const otherProjects = await BuilderProject.find({
         _id: { $ne: id },
-        "plans.category": plans_type,
+         plans_type: plans_type,
         "plans_priority.is_active": true,
       });
       const projectIdsToUpdate = otherProjects.filter((otherProject) => {
@@ -857,7 +857,7 @@ const getProjectbyByPlansWithPriority = asyncHandler(async (req, res) => {
   const { id } = req.params;
   try {
     const projects = await BuilderProject.find({
-      "plans.category": id,
+      plans_type: id,
       status: "approve",
       "plans_priority.plans_type": id,
     })
