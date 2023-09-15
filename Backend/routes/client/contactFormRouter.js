@@ -7,14 +7,14 @@ router.post("/sendmail", (req, res) => {
     name,
     email,
     phone,
-    office_type,
-    no_of_seats,
-    move_in,
-    query,
-    your_city,
-    plan_type,
-    when_to,
-    location,
+    // office_type,
+    // no_of_seats,
+    // move_in,
+    // query,
+    // your_city,
+    // plan_type,
+    // when_to,
+    // location,
   } = req.body;
   try {
     const transporter = nodemailer.createTransport({
@@ -26,37 +26,25 @@ router.post("/sendmail", (req, res) => {
       secure: true,
     });
     let emailContent;
-    if (query) {
+    // if (query) {
       emailContent = `<ul>
       <li>Name: ${name}</li>
       <li>Email: ${email}</li>
       <li>Phone: ${phone}</li>
-      <li>Office Type: ${office_type}</li>
-      <li>No. of seats: ${no_of_seats}</li>
-      <li>Query: ${query}</li>
-      <li>Page Location: ${location}</li>
     </ul>`;
-    } else if (your_city) {
-      emailContent = `<ul>
-      <li>Name: ${name}</li>
-      <li>Email: ${email}</li>
-      <li>Phone: ${phone}</li>
-      <li>City: ${your_city}</li>
-      <li>Plan Type: ${plan_type}</li>
-      <li>When To: ${when_to}</li>
-      <li>Page Location: ${location}</li>
-    </ul>`;
-    } else {
-      emailContent = `<ul>
-      <li>Name: ${name}</li>
-      <li>Email: ${email}</li>
-      <li>Phone: ${phone}</li>
-      <li>Office Type: ${office_type}</li>
-      <li>No. of seats: ${no_of_seats}</li>
-      <li>Move in: ${move_in}</li>
-      <li>Page Location: ${location}</li>
-    </ul>`;
-    }
+    // } else if (your_city) {
+    //   emailContent = `<ul>
+    //   <li>Name: ${name}</li>
+    //   <li>Email: ${email}</li>
+    //   <li>Phone: ${phone}</li>
+    // </ul>`;
+    // } else {
+    //   emailContent = `<ul>
+    //   <li>Name: ${name}</li>
+    //   <li>Email: ${email}</li>
+    //   <li>Phone: ${phone}</li>
+    // </ul>`;
+    // }
 
     const mailOptions = {
       from: email,
