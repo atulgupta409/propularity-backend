@@ -139,6 +139,32 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
+    projectsByCity: {
+      type: GraphQLList(ProjectType),
+      args: {
+        city: { type: GraphQLString }
+      },
+      async resolve(parent, args) {
+        try {
+          const city = await City.find({name: { $regex: args.city, $options: 'i' }})
+
+          const projects = await BuilderProject.find({
+        "location.city": city[0]._id,
+        status: "approve",
+        "is_popular.order": { $nin: [0, 1000] },
+    })
+      .populate("location.city", "name")
+      .populate("location.micro_location", "name")
+      .sort({ "is_popular.order": 1 }) // Sort by priority.order in ascending order
+      .exec();
+
+         return projects
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
   },
 });
 module.exports = new GraphQLSchema({
