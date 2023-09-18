@@ -890,6 +890,88 @@ const getProjectbyByPlansWithPriority = asyncHandler(async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+const indiaProjectsOrder = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { order, is_active } = req.body;
+
+    // Find the coworking project to be updated
+    const projectsToUpdate = await BuilderProject.findById(id);
+
+    if (!projectsToUpdate) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    const currentOrder = projectsToUpdate.priority_india.order;
+    if (is_active === false && order === 1000) {
+      projectsToUpdate.priority_india.is_active = false;
+      projectsToUpdate.priority_india.order = order;
+      await projectsToUpdate.save();
+
+      // Decrement the higher order coworking projects by one
+      await BuilderProject.updateMany(
+        {
+          _id: { $ne: id }, // Exclude the current coworking project
+          "priority_india.order": { $gt: currentOrder }, // Higher order workprojects
+          "priority_india.is_active": true,
+        },
+        { $inc: { "priority_india.order": -1 } }
+      );
+    } else {
+      // Update the priority of the coworking project to the specified order
+      projectsToUpdate.priority_india.order = order;
+
+      // Update the "is_active" field based on the specified order
+      projectsToUpdate.priority_india.is_active = order !== 1000;
+
+      await projectsToUpdate.save();
+    }
+
+    res.json(projectsToUpdate);
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+const indiaProjectsWithPriority = asyncHandler(async (req, res) => {
+
+  try {
+    const projects = await BuilderProject.find({
+      status: "approve",
+      "priority_india.order": { $nin: [0, 1000] },
+    })
+      .populate("location.city", "name")
+      .sort({ "priority_india.order": 1 }) // Sort by priority.order in ascending order
+      .exec();
+    
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+const indiaProjectOrderbyDrag = asyncHandler(async (req, res) => {
+  try {
+    const updatedProjects = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updatedProjects array and update each coworking project in the database
+    for (const project of updatedProjects) {
+      const { _id, priority_india } = project;
+      // Find the coworking project by its _id and update its priority order
+      await BuilderProject.findByIdAndUpdate(_id, {
+        $set: {
+          "priority_india.order": priority_india.order,
+          "priority_india.is_active": priority_india.order !== 1000,
+        },
+      });
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while updating priority" });
+  }
+});
 module.exports = {
   postBuilderProjects,
   getProjects,
@@ -914,5 +996,8 @@ module.exports = {
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,
-  getProjectsWithPagination
+  getProjectsWithPagination,
+  indiaProjectsOrder,
+  indiaProjectsWithPriority,
+  indiaProjectOrderbyDrag
 };

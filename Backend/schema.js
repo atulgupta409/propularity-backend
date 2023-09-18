@@ -8,6 +8,7 @@ const MicroLocation = require('./models/microLocationModel');
 const { MicroLocationType } = require('./graphqlTypes/locationType');
 const BuilderProjectType = require('./graphqlTypes/projectType');
 const Builder = require('./models/builderModel');
+const BuilderType = require('./graphqlTypes/builderType');
 
 const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
@@ -128,10 +129,25 @@ const RootQuery = new GraphQLObjectType({
       },
     },
     builders: {
-      type: GraphQLList(BuilderProjectType),
+      type: GraphQLList(BuilderType),
       async resolve(parent, args) {
         try {
           const builder = await Builder.find()
+         return builder
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
+    buildersBySlug: {
+      type: GraphQLList(BuilderType),
+      args: {
+        slug: {type: GraphQLString}
+      },
+      async resolve(parent, args) {
+        try {
+          const builder = await Builder.find({slug: args.slug})
          return builder
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -148,7 +164,7 @@ const RootQuery = new GraphQLObjectType({
         try {
           const city = await City.find({name: { $regex: args.city, $options: 'i' }})
 
-          const projects = await BuilderProject.find({
+        const projects = await BuilderProject.find({
         "location.city": city[0]._id,
         status: "approve",
         "is_popular.order": { $nin: [0, 1000] },
@@ -156,6 +172,25 @@ const RootQuery = new GraphQLObjectType({
       .populate("location.city", "name")
       .populate("location.micro_location", "name")
       .sort({ "is_popular.order": 1 }) // Sort by priority.order in ascending order
+      .exec();
+
+         return projects
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
+    topIndiaProjects: {
+      type: GraphQLList(ProjectType),
+      async resolve(parent, args) {
+        try {
+        const projects = await BuilderProject.find({
+        status: "approve",
+        "priority_india.order": { $nin: [0, 1000] },
+    })
+      .populate("location.city", "name")
+      .sort({ "priority_india.order": 1 }) // Sort by priority.order in ascending order
       .exec();
 
          return projects

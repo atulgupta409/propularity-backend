@@ -24,7 +24,10 @@ const {
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,
-  getProjectsWithPagination
+  getProjectsWithPagination,
+  indiaProjectsOrder,
+  indiaProjectsWithPriority,
+  indiaProjectOrderbyDrag
 } = require("../../controllers/admin/builderProjectController");
 const router = express.Router();
 
@@ -69,5 +72,8 @@ router
     "/plans-projects/:id",
 
     getProjectbyByPlansWithPriority
-  );
+  )
+  .put("/priority-india/:id", protect, indiaProjectsOrder)
+  .put("/drag-priority", protect, indiaProjectOrderbyDrag)
+  .get("/project-india", protect, indiaProjectsWithPriority);
 module.exports = router;
