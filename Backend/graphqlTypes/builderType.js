@@ -1,5 +1,6 @@
-const { GraphQLObjectType, GraphQLString, GraphQLBoolean, GraphQLID, GraphQLList, GraphQLInt } = require('graphql');
-const { CityType } = require('./locationType');
+const { GraphQLObjectType, GraphQLString, GraphQLBoolean, GraphQLID, GraphQLList, GraphQLInt, GraphQLFloat } = require('graphql');
+const City  = require("../models/cityModel")
+const {CityType} = require("./locationType")
 const ImageType = new GraphQLObjectType({
     name: 'builderImage',
     fields: {
@@ -8,6 +9,8 @@ const ImageType = new GraphQLObjectType({
       alt: { type: GraphQLString },
     },
   });
+
+
 const BuilderType = new GraphQLObjectType({
   name: 'Builder',
   fields: {
@@ -17,16 +20,19 @@ const BuilderType = new GraphQLObjectType({
     starting_price: { type: GraphQLString },
     configuration: { type: GraphQLString },
     estb_year: { type: GraphQLInt },
-    ratings: { type: GraphQLInt },
+    ratings: { type: GraphQLFloat },
     type: { type: GraphQLString },
     residential_num: { type: GraphQLInt },
     commercial_num: { type: GraphQLInt },
     coming_soon: { type: GraphQLString },
     slug: { type: GraphQLString },
     is_active: { type: GraphQLBoolean },
-    images: { type: GraphQLList(ImageType)},
+    images: { type: GraphQLList(ImageType)},  
     BuilderLogo: { type: GraphQLString },
-    cities: { type: CityType }, // You might want to use CityType here
+    cities: { type: GraphQLList(CityType),
+      resolve(parent, args) {
+        return City.find({ _id: { $in: parent.cities } }); 
+      }, },
     seo: {
       type: new GraphQLObjectType({
         name: 'BuilderSeo',

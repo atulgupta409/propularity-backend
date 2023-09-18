@@ -210,7 +210,7 @@ const RootQuery = new GraphQLObjectType({
       async resolve(parent, args) {
         try {
           const city = await City.find({name: { $regex: args.city, $options: 'i' }})
-
+          
          const planType = await PropertyType.find({name: { $regex: args.planType, $options: 'i' }})
          const projects = await BuilderProject.find({
           "location.city": city[0]._id,
