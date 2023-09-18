@@ -20,7 +20,7 @@ const {
   changeBuilderProjectOrder,
   changeBuilderProjectOrderbyDrag,
   getProjectbyByBuilderWithPriority,
-  getProjectsbyPlans,
+  getProjectsbyPlansAndCity,
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,
@@ -65,11 +65,11 @@ router
 
     getProjectbyByBuilderWithPriority
   )
-  .get("/projects-by-plans/:id", getProjectsbyPlans)
+  .get("/projects-by-plans/:id/:city", getProjectsbyPlansAndCity)
   .put("/plans-order/:id", protect, changePlansProjectOrder)
   .put("/plans-priority", protect, changePlansProjectOrderbyDrag)
   .get(
-    "/plans-projects/:id",
+    "/plans-projects/:id/:city",
 
     getProjectbyByPlansWithPriority
   )

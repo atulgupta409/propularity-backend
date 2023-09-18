@@ -9,6 +9,7 @@ const { MicroLocationType } = require('./graphqlTypes/locationType');
 const BuilderProjectType = require('./graphqlTypes/projectType');
 const Builder = require('./models/builderModel');
 const BuilderType = require('./graphqlTypes/builderType');
+const PropertyType = require("./models/propertyTypeModel")
 
 const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
@@ -194,6 +195,52 @@ const RootQuery = new GraphQLObjectType({
       .exec();
 
          return projects
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
+    topProjectsByPlanAndCity: {
+      type: GraphQLList(ProjectType),
+      args: {
+        city: { type: GraphQLString },
+        planType: { type: GraphQLString }
+      },
+      async resolve(parent, args) {
+        try {
+          const city = await City.find({name: { $regex: args.city, $options: 'i' }})
+
+         const planType = await PropertyType.find({name: { $regex: args.planType, $options: 'i' }})
+         const projects = await BuilderProject.find({
+          "location.city": city[0]._id,
+           plans_type: planType[0]._id,
+           status: "approve",
+    })
+      .populate("location.city", "name") 
+      .exec();
+
+      const filteredProjects = projects.filter((otherProject) => {
+        return otherProject.plans_priority.some((priority) => {
+          if (priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()) {
+            return priority.order !== 1000;
+          }
+        });
+      });
+      filteredProjects.sort((a, b) => {
+        const priorityA = a.plans_priority.find(
+          (priority) =>
+            priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
+        );
+        const priorityB = b.plans_priority.find(
+          (priority) =>
+            priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
+        );
+  
+        return priorityA.order - priorityB.order;
+      });
+
+         return filteredProjects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
           throw error;
