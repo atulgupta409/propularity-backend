@@ -12,6 +12,7 @@ const postBuilder = asyncHandler(async (req, res) => {
   const {
     name,
     description,
+    about_builder,
     starting_price,
     configuration,
     estb_year,
@@ -31,6 +32,7 @@ const postBuilder = asyncHandler(async (req, res) => {
     const BuilderData = await Builder.create({
       name,
       description,
+      about_builder,
       starting_price,
       configuration,
       estb_year,
@@ -67,6 +69,7 @@ const editBuilders = asyncHandler(async (req, res) => {
     const {
       name,
       description,
+      about_builder,
       starting_price,
       configuration,
       estb_year,
@@ -86,6 +89,7 @@ const editBuilders = asyncHandler(async (req, res) => {
       {
         name,
         description,
+        about_builder,
         starting_price,
         configuration,
         estb_year,
