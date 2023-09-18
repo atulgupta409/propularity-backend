@@ -38,15 +38,11 @@ const s3Client = new AWS.S3({
   secretAccessKey: process.env.SECRET_KEY,
   region: process.env.REGION,
 });
-const corsOptions = {
-  origin: 'https://admin.propularity.in',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true,
-};
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static('public'));
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(contactFormRouter);
@@ -63,12 +59,27 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 const allowedFormats = ["image/jpeg", "image/png", "image/svg+xml"];
+const pdfAllowFormats = ["application/pdf"];
 
 app.post("/upload-image", upload.array("files"), (req, res) => {
   const promiseArray = [];
   req.files.forEach((file) => {
     // Check if the file format is allowed
-    if (allowedFormats.includes(file.mimetype)) {
+    if (pdfAllowFormats.includes(file.mimetype)) {
+      // Generate a unique filename for the uploaded file
+      const fileExtension = file.originalname.split(".").pop();
+      const uniqueFileName = `file-${Date.now()}.${fileExtension}`;
+      
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: `uploads/${uniqueFileName}`, // Specify the desired path and filename in your bucket
+        Body: file.buffer,
+      };
+      
+      const putObjectPromise = s3Client.upload(params).promise();
+      promiseArray.push(putObjectPromise);
+    } 
+    else if (allowedFormats.includes(file.mimetype)) {
       const params = {
         Acl: "public-read",
         Bucket: process.env.BUCKET_NAME,
@@ -77,7 +88,8 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
       };
       const putObjectPromise = s3Client.upload(params).promise();
       promiseArray.push(putObjectPromise);
-    } else {
+    }
+    else {
       console.log(
         `Skipping file ${file.originalname} due to unsupported format.`
       );
@@ -86,9 +98,7 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
 
   Promise.all(promiseArray)
     .then((values) => {
-      console.log(values);
       const urls = values.map((value) => value.Location);
-      console.log(urls);
       res.send(urls);
     })
     .catch((err) => {
@@ -96,6 +106,7 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
       res.status(500).send(err);
     });
 });
+
 
 app.get("/", (req, res) => {
   res.send("API is running for propularity...");
