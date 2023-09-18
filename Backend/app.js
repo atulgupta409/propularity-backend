@@ -39,7 +39,7 @@ const s3Client = new AWS.S3({
   region: process.env.REGION,
 });
 const corsOptions = {
-  origin: 'http://admin.propularity.in',
+  origin: 'https://admin.propularity.in',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true,
 };
