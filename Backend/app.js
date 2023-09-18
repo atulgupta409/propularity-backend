@@ -38,15 +38,15 @@ const s3Client = new AWS.S3({
   secretAccessKey: process.env.SECRET_KEY,
   region: process.env.REGION,
 });
-// const corsOptions = {
-//   origin: 'http://admin.propularity.in',
-//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-//   credentials: true,
-// };
+const corsOptions = {
+  origin: 'http://admin.propularity.in',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+};
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(express.static('public'));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(contactFormRouter);
