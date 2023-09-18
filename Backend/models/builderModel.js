@@ -4,6 +4,7 @@ const builderModel = mongoose.Schema(
   {
     name: { type: String, unique: true, required: true },
     description: String,
+    about_builder: String,
     starting_price: String,
     configuration: String,
     estb_year: Number,
