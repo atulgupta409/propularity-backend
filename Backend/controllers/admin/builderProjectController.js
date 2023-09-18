@@ -705,11 +705,12 @@ const getProjectbyByBuilderWithPriority = asyncHandler(async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-const getProjectsbyPlans = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+const getProjectsbyPlansAndCity = asyncHandler(async (req, res) => {
+  const { id, city } = req.params;
 
   try {
     const projects = await BuilderProject.find({
+      "location.city": city,
       plans_type: id,
       status: "approve",
     })
@@ -726,14 +727,20 @@ const getProjectsbyPlans = asyncHandler(async (req, res) => {
 const changePlansProjectOrder = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const { order, is_active, plans_type } = req.body;
+    const { order, is_active, plans_type, cityId } = req.body;
 
     const projectToUpdate = await BuilderProject.findById(id);
     
     if (!projectToUpdate) {
       return res.status(404).json({ error: "Project not found" });
     }
-
+    if (
+      !projectToUpdate.location.city === cityId
+    ) {
+      return res.status(400).json({
+        error: "None of the project match the specified plan types",
+      });
+    }
     const currentplans_priority = projectToUpdate.plans_priority.find(
       (plans_priority) =>
         plans_priority.plans_type &&
@@ -743,7 +750,7 @@ const changePlansProjectOrder = asyncHandler(async (req, res) => {
     let currentOrder = currentplans_priority
       ? currentplans_priority.order
       : 1000;
-
+   
     if (is_active === false && order === 1000) {
       projectToUpdate.plans_priority.forEach((plans_priority) => {
         if (
@@ -759,6 +766,7 @@ const changePlansProjectOrder = asyncHandler(async (req, res) => {
       const otherProjects = await BuilderProject.find({
         _id: { $ne: id },
          plans_type: plans_type,
+         "location.city": cityId,
         "plans_priority.is_active": true,
       });
       const projectIdsToUpdate = otherProjects.filter((otherProject) => {
@@ -854,9 +862,10 @@ const changePlansProjectOrderbyDrag = asyncHandler(async (req, res) => {
   }
 });
 const getProjectbyByPlansWithPriority = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const { id, city } = req.params;
   try {
     const projects = await BuilderProject.find({
+      "location.city": city,
       plans_type: id,
       status: "approve",
       "plans_priority.plans_type": id,
@@ -992,7 +1001,7 @@ module.exports = {
   changeBuilderProjectOrder,
   changeBuilderProjectOrderbyDrag,
   getProjectbyByBuilderWithPriority,
-  getProjectsbyPlans,
+  getProjectsbyPlansAndCity,
   changePlansProjectOrder,
   changePlansProjectOrderbyDrag,
   getProjectbyByPlansWithPriority,

@@ -1,4 +1,5 @@
 const { GraphQLObjectType, GraphQLString, GraphQLBoolean, GraphQLID, GraphQLList, GraphQLInt } = require('graphql');
+const { CityType } = require('./locationType');
 const ImageType = new GraphQLObjectType({
     name: 'builderImage',
     fields: {
@@ -25,7 +26,7 @@ const BuilderType = new GraphQLObjectType({
     is_active: { type: GraphQLBoolean },
     images: { type: GraphQLList(ImageType)},
     BuilderLogo: { type: GraphQLString },
-    // cities: { type: GraphQLList(GraphQLID) }, // You might want to use CityType here
+    cities: { type: CityType }, // You might want to use CityType here
     seo: {
       type: new GraphQLObjectType({
         name: 'BuilderSeo',
