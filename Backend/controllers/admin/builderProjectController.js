@@ -25,6 +25,7 @@ const postBuilderProjects = asyncHandler(async (req, res) => {
     amenties,
     description,
     images,
+    brochure,
     seo,
     geo_location,
     contact_details,
@@ -57,6 +58,7 @@ const postBuilderProjects = asyncHandler(async (req, res) => {
       amenties,
       description,
       images,
+      brochure,
       seo,
       geo_location,
       contact_details,
@@ -93,6 +95,7 @@ const editProjects = asyncHandler(async (req, res) => {
     amenties,
     description,
     images,
+    brochure,
     seo,
     geo_location,
     contact_details,
@@ -126,6 +129,7 @@ const editProjects = asyncHandler(async (req, res) => {
       amenties,
       description,
       images,
+      brochure,
       seo,
       geo_location,
       contact_details,
@@ -568,9 +572,10 @@ const searchProjects = asyncHandler(async (req, res) => {
       }
     }
 
-    if (status) {
+    if (status && status !== "All") {
       query.status = status;
     }
+
     const page = parseInt(req.query.page) || 1; // Current page number
     const limit = parseInt(req.query.limit) || 10;
     const totalCount = await BuilderProject.countDocuments(query);

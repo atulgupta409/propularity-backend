@@ -118,7 +118,7 @@ const builderProjectModel = mongoose.Schema(
         alt: String,
       },
     ],
-
+   brochure: { type: String },
     seo: {
       title: { type: String },
       description: { type: String },
