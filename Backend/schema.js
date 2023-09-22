@@ -1,4 +1,4 @@
-const { GraphQLList, GraphQLSchema, GraphQLObjectType, GraphQLInt, GraphQLString } = require('graphql');
+const { GraphQLList, GraphQLSchema, GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLFloat } = require('graphql');
 const {AmenityType} = require('./graphqlTypes/amenityType');
 const Amenity = require('./models/amenitiesModel'); // Import your Amenity model
 const ProjectType = require("./graphqlTypes/projectType")
@@ -18,6 +18,21 @@ const PaginatedBuilderProjectsType = new GraphQLObjectType({
     filteredProjects: { type: GraphQLList(ProjectType) },
   }),
 });
+function parsePrice(priceStr) {
+  const regex = /([\d.]+)\s*(Cr|Lacs?)/i;
+  const match = priceStr.match(regex);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    if (unit === "cr") {
+      return value * 100; // Convert Crores to Lakhs (1 Cr = 100 Lakhs)
+    } else if (unit === "lacs" || unit === "lac") {
+      return value;
+    }
+  }
+  return 0; // Return 0 for unrecognized formats
+}
+
 
 const RootQuery = new GraphQLObjectType({
   name: 'RootQueryType',
@@ -47,7 +62,8 @@ const RootQuery = new GraphQLObjectType({
       args: {
         page: { type: GraphQLInt },
         perPage: { type: GraphQLInt },
-        location: {type: GraphQLString}
+        location: {type: GraphQLString},
+        city: {type: GraphQLString}
       },
       async resolve(parent, args) {
         try {
@@ -55,13 +71,26 @@ const RootQuery = new GraphQLObjectType({
           const perPage = args.perPage || 10;
 
           const skip = (page - 1) * perPage;
-          const location = await MicroLocation.find({name: { $regex: args.location, $options: 'i' }})
-          const totalCount = await BuilderProject.countDocuments({"location.micro_location": location[0]._id,
-          "priority.microlocationId": location[0]._id, status: "approve",});
+          const regexCitySlug = new RegExp(`^${args.city}$`, "i");
+          const city = await City.findOne({ name: regexCitySlug }).exec();
+          if (!city) {
+          return console.log("City not found");
+        }
+        const regexMicrolocationSlug = new RegExp(`^${args.location}$`, "i");
+    
+        const microlocationsInCity = await MicroLocation.find({
+          name: regexMicrolocationSlug,
+          city: city._id,
+        }).exec();
+        if (microlocationsInCity.length === 0) {
+          return console.log("microlocation not found");
+        }
+          const totalCount = await BuilderProject.countDocuments({"location.micro_location": microlocationsInCity[0]._id,
+          "priority.microlocationId": microlocationsInCity[0]._id, status: "approve",});
           
            
-          const projects = await BuilderProject.find({"location.micro_location": location[0]._id,
-           "priority.microlocationId": location[0]._id, status: "approve",})
+          const projects = await BuilderProject.find({"location.micro_location": microlocationsInCity[0]._id,
+           "priority.microlocationId": microlocationsInCity[0]._id, status: "approve",})
             .skip(skip)
             .limit(perPage);
          
@@ -69,7 +98,7 @@ const RootQuery = new GraphQLObjectType({
               return otherProject.priority.some((priority) => {
                 if (
                   priority.microlocationId &&
-                  priority.microlocationId.toString() === location[0]._id.toString()
+                  priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
                 ) {
                   return priority.order !== 1000;
                 }
@@ -79,11 +108,11 @@ const RootQuery = new GraphQLObjectType({
             filteredProjects.sort((a, b) => {
               const priorityA = a.priority.find(
                 (priority) =>
-                  priority.microlocationId && priority.microlocationId.toString() === location[0]._id.toString()
+                  priority.microlocationId && priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
               );
               const priorityB = b.priority.find(
                 (priority) =>
-                  priority.microlocationId && priority.microlocationId.toString() === location[0]._id.toString()
+                  priority.microlocationId && priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
               );
         
               return priorityA.order - priorityB.order;
@@ -193,7 +222,7 @@ const RootQuery = new GraphQLObjectType({
       .populate("location.city", "name")
       .sort({ "priority_india.order": 1 }) // Sort by priority.order in ascending order
       .exec();
-
+         
          return projects
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -241,6 +270,41 @@ const RootQuery = new GraphQLObjectType({
       });
 
          return filteredProjects;
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
+    projectsByLocationForSearch: {
+      type: GraphQLList(ProjectType),
+      args: {
+        city: { type: GraphQLString },
+        location: { type: GraphQLString },
+      },
+      async resolve(parent, args) {
+        try {
+      const regexCitySlug = new RegExp(`^${args.city}$`, "i");
+      const city = await City.findOne({ name: regexCitySlug }).exec();
+      if (!city) {
+      return console.log("City not found")
+    }
+    const regexMicrolocationSlug = new RegExp(`^${args.location}$`, "i");
+
+    const microlocationsInCity = await MicroLocation.find({
+      name: regexMicrolocationSlug,
+      city: city._id,
+    }).exec();
+    if (microlocationsInCity.length === 0) {
+      return console.log("microlocation not found");
+    }
+
+        const projects = await BuilderProject.find({
+           "location.city": city._id,
+           "location.micro_location": microlocationsInCity[0]._id,
+             status: "approve",
+        })
+          return projects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
           throw error;

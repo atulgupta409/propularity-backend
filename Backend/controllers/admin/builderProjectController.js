@@ -549,9 +549,9 @@ const changeProjectOrderbyDrag = asyncHandler(async (req, res) => {
 const searchProjects = asyncHandler(async (req, res) => {
   try {
     const { name, city, microlocation, status } = req.query;
-
+    
     const query = {};
-
+    
     if (name) {
       query.name = { $regex: name, $options: "i" };
     }
