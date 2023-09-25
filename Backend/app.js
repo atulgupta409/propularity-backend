@@ -1,4 +1,5 @@
 const express = require("express");
+const compression = require('compression');
 const cors = require("cors");
 const bodyParser = require('body-parser');
 const connectDB = require("./config/db");
@@ -40,6 +41,7 @@ const s3Client = new AWS.S3({
 });
 
 app.use(express.urlencoded({ extended: false }));
+app.use(compression());
 app.use(express.json());
 app.use(express.static('public'));
 app.use(cors());

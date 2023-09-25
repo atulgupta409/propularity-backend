@@ -178,6 +178,7 @@ const getProjectsWithPagination = asyncHandler(async (req, res) => {
     const projects = await BuilderProject.find()
       .populate("location.city", "name")
       .populate("location.micro_location", "name")
+      .populate("builder", "name")
       .skip((page - 1) * limit) // Skip results based on page number
       .limit(limit) // Limit the number of results per page
       .exec();

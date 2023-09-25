@@ -18,24 +18,11 @@ const PaginatedBuilderProjectsType = new GraphQLObjectType({
     filteredProjects: { type: GraphQLList(ProjectType) },
   }),
 });
-function parsePrice(priceStr) {
-  const regex = /([\d.]+)\s*(Cr|Lacs?)/i;
-  const match = priceStr.match(regex);
-  if (match) {
-    const value = parseFloat(match[1]);
-    const unit = match[2].toLowerCase();
-    if (unit === "cr") {
-      return value * 100; // Convert Crores to Lakhs (1 Cr = 100 Lakhs)
-    } else if (unit === "lacs" || unit === "lac") {
-      return value;
-    }
-  }
-  return 0; // Return 0 for unrecognized formats
-}
+
 
 
 const RootQuery = new GraphQLObjectType({
-  name: 'RootQueryType',
+  name: 'RootQueryType',  
   fields: {
     amenities: {
       type: GraphQLList(AmenityType),
