@@ -298,6 +298,26 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
+    projectsByBuilder: {
+      type: GraphQLList(ProjectType),
+      args: {
+        builder: { type: GraphQLString }
+      },
+      async resolve(parent, args) {
+        try {
+          const builder = await Builder.find({name: { $regex: args.builder, $options: 'i' }})
+
+        const projects = await BuilderProject.find({
+        builder : builder[0]._id,
+        status: "approve",
+    })
+         return projects
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
   },
 });
 module.exports = new GraphQLSchema({
