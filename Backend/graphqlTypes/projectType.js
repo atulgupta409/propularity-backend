@@ -183,6 +183,7 @@ const LocationType = new GraphQLObjectType({
       project_type: { type: GraphQLString },
       slug: { type: GraphQLString },
       starting_price: { type: GraphQLString },
+      brochure: {type: GraphQLString},
       configuration: { type: GraphQLString },
       ratings: { type: GraphQLFloat },
       coming_soon: { type: GraphQLString },
