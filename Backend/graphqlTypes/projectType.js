@@ -209,7 +209,7 @@ const LocationType = new GraphQLObjectType({
       contact_details: { type: GraphQLList(ContactDetailsType) },
       is_active: { type: GraphQLBoolean },
       status: { type: GraphQLString },
-      priority: { type: PriorityType },
+      priority: { type: GraphQLList(PriorityType) },
       is_popular: { type: PopularType },
       createdAt: { type: GraphQLDateTime },
       updatedAt: { type: GraphQLDateTime },

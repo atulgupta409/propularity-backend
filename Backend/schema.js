@@ -1,16 +1,15 @@
-const { GraphQLList, GraphQLSchema, GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLFloat } = require('graphql');
+const { GraphQLList, GraphQLSchema, GraphQLObjectType, GraphQLInt, GraphQLString, GraphQLFloat,GraphQLUnionType, } = require('graphql');
 const {AmenityType} = require('./graphqlTypes/amenityType');
 const Amenity = require('./models/amenitiesModel'); // Import your Amenity model
 const ProjectType = require("./graphqlTypes/projectType")
 const BuilderProject = require("./models/builderProjectModel")
 const City = require("./models/cityModel");
 const MicroLocation = require('./models/microLocationModel');
-const { MicroLocationType } = require('./graphqlTypes/locationType');
+const { MicroLocationType,CityType } = require('./graphqlTypes/locationType');
 const BuilderProjectType = require('./graphqlTypes/projectType');
 const Builder = require('./models/builderModel');
 const BuilderType = require('./graphqlTypes/builderType');
 const PropertyType = require("./models/propertyTypeModel")
-
 const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
   fields: () => ({
@@ -18,7 +17,16 @@ const PaginatedBuilderProjectsType = new GraphQLObjectType({
     filteredProjects: { type: GraphQLList(ProjectType) },
   }),
 });
-
+const SearchResultType = new GraphQLUnionType({
+  name: "SearchResult",
+  types: [CityType, MicroLocationType, BuilderType, ProjectType],
+  resolveType: (value) => {
+    if (value instanceof City) return CityType;
+    if (value instanceof MicroLocation) return MicroLocationType;
+    if (value instanceof Builder) return BuilderType;
+    if (value instanceof BuilderProject) return ProjectType;
+  },
+});
 
 
 const RootQuery = new GraphQLObjectType({
@@ -318,6 +326,34 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
+    search: {
+      type: GraphQLList(SearchResultType),
+      args: {
+        searchTerm: { type: GraphQLString },
+      },
+      resolve: async (parent, args) => { // Use 'async' here
+        const { searchTerm } = args;
+        const searchResults = [];
+    
+        try {
+          // Perform searches in all models (City, MicroLocation, Builder, Project)
+          const cityResults = await City.find({ name: { $regex: searchTerm, $options: "i" } });
+          const microLocationResults = await MicroLocation.find({ name: { $regex: searchTerm, $options: "i" } });
+          const builderResults = await Builder.find({ name: { $regex: searchTerm, $options: "i" } });
+          const projectResults = await BuilderProject.find({ name: { $regex: searchTerm, $options: "i" } });
+    
+          // Push the results into the searchResults array
+          searchResults.push(...cityResults, ...microLocationResults, ...builderResults, ...projectResults);
+    
+          return searchResults;
+        } catch (error) {
+          console.error("Error in search resolver:", error);
+          throw error;
+        }
+      },
+    },
+    
+    
   },
 });
 module.exports = new GraphQLSchema({
