@@ -309,11 +309,11 @@ const RootQuery = new GraphQLObjectType({
     projectsByBuilder: {
       type: GraphQLList(ProjectType),
       args: {
-        builder: { type: GraphQLString }
+        builderName: { type: GraphQLString }
       },
       async resolve(parent, args) {
         try {
-          const builder = await Builder.find({name: { $regex: args.builder, $options: 'i' }})
+          const builder = await Builder.find({name: { $regex: args.builderName, $options: 'i' }})
 
         const projects = await BuilderProject.find({
         builder : builder[0]._id,
