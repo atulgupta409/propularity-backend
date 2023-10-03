@@ -352,7 +352,41 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    
+      projectsByBuilderAndTypes: {
+      type: PaginatedBuilderProjectsType,
+      args: {
+         page: { type: GraphQLInt },
+        perPage: { type: GraphQLInt },
+        builderName: { type: GraphQLString },
+        type: {type: GraphQLString}
+      },
+      async resolve(parent, args) {
+        try {
+           const page = args.page || 1;
+          const perPage = args.perPage || 10;
+           const skip = (page - 1) * perPage;
+          const builder = await Builder.find({name: { $regex: args.builderName, $options: 'i' }})
+        const totalCount = await BuilderProject.countDocuments({
+          builder : builder[0]._id,
+          project_type: { $regex: args.type, $options: 'i' },
+          status: "approve",
+      })
+        const filteredProjects = await BuilderProject.find({
+        builder : builder[0]._id,
+        project_type: args.type,
+        status: "approve",
+    }) .skip(skip)
+       .limit(perPage);
+       return {
+        totalCount,
+        filteredProjects,
+      };
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
     
   },
 });
