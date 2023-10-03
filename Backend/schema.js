@@ -352,7 +352,7 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-      projectsByBuilderAndTypes: {
+    projectsByBuilderAndTypes: {
       type: PaginatedBuilderProjectsType,
       args: {
          page: { type: GraphQLInt },
@@ -387,7 +387,45 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
-    
+    projectsByCityAndStatus: {
+      type: PaginatedBuilderProjectsType,
+      args: {
+         page: { type: GraphQLInt },
+        perPage: { type: GraphQLInt },
+        status: { type: GraphQLString },
+        city: {type: GraphQLString}
+      },
+      async resolve(parent, args) {
+        try {
+           const page = args.page || 1;
+          const perPage = args.perPage || 10;
+           const skip = (page - 1) * perPage;
+           const regexCitySlug = new RegExp(`^${args.city}$`, "i");
+           const city = await City.findOne({ name: regexCitySlug }).exec();
+           if (!city) {
+           return console.log("City not found")
+         }
+        const totalCount = await BuilderProject.countDocuments({
+          "location.city": city._id,
+          project_status: { $regex: args.status, $options: 'i' },
+          status: "approve",
+      })
+        const filteredProjects = await BuilderProject.find({
+          "location.city": city._id,
+          project_status: { $regex: args.status, $options: 'i' },
+          status: "approve",
+      }) .skip(skip)
+         .limit(perPage);
+       return {
+        totalCount,
+        filteredProjects,
+      };
+        } catch (error) {
+          console.error('Error in builder resolver:', error);
+          throw error;
+        }
+      },
+    },
   },
 });
 module.exports = new GraphQLSchema({
