@@ -53,19 +53,13 @@ const RootQuery = new GraphQLObjectType({
       },
     },
     builderProjectsByLocation: {
-      type: PaginatedBuilderProjectsType,
+      type: GraphQLList(ProjectType),
       args: {
-        page: { type: GraphQLInt },
-        perPage: { type: GraphQLInt },
         location: {type: GraphQLString},
         city: {type: GraphQLString}
       },
       async resolve(parent, args) {
         try {
-          const page = args.page || 1;
-          const perPage = args.perPage || 10;
-
-          const skip = (page - 1) * perPage;
           const regexCitySlug = new RegExp(`^${args.city}$`, "i");
           const city = await City.findOne({ name: regexCitySlug }).exec();
           if (!city) {
@@ -80,14 +74,9 @@ const RootQuery = new GraphQLObjectType({
         if (microlocationsInCity.length === 0) {
           return console.log("microlocation not found");
         }
-          const totalCount = await BuilderProject.countDocuments({"location.micro_location": microlocationsInCity[0]._id,
-          "priority.microlocationId": microlocationsInCity[0]._id, status: "approve",});
-          
-           
+      
           const projects = await BuilderProject.find({"location.micro_location": microlocationsInCity[0]._id,
            "priority.microlocationId": microlocationsInCity[0]._id, status: "approve",})
-            .skip(skip)
-            .limit(perPage);
          
             const filteredProjects = projects.filter((otherProject) => {
               return otherProject.priority.some((priority) => {
@@ -113,10 +102,8 @@ const RootQuery = new GraphQLObjectType({
               return priorityA.order - priorityB.order;
             });
 
-          return {
-            totalCount,
-            filteredProjects,
-          };
+          return filteredProjects;
+        
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
           throw error;
@@ -353,34 +340,21 @@ const RootQuery = new GraphQLObjectType({
       },
     },
     projectsByBuilderAndTypes: {
-      type: PaginatedBuilderProjectsType,
+      type:  GraphQLList(ProjectType),
       args: {
-         page: { type: GraphQLInt },
-        perPage: { type: GraphQLInt },
         builderName: { type: GraphQLString },
         type: {type: GraphQLString}
       },
       async resolve(parent, args) {
         try {
-           const page = args.page || 1;
-          const perPage = args.perPage || 10;
-           const skip = (page - 1) * perPage;
           const builder = await Builder.find({name: { $regex: args.builderName, $options: 'i' }})
-        const totalCount = await BuilderProject.countDocuments({
-          builder : builder[0]._id,
-          project_type: { $regex: args.type, $options: 'i' },
-          status: "approve",
-      })
+
         const filteredProjects = await BuilderProject.find({
         builder : builder[0]._id,
         project_type: args.type,
         status: "approve",
-    }) .skip(skip)
-       .limit(perPage);
-       return {
-        totalCount,
-        filteredProjects,
-      };
+    }) 
+       return filteredProjects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
           throw error;
