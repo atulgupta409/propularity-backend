@@ -65,19 +65,17 @@ const RootQuery = new GraphQLObjectType({
           if (!city) {
           return console.log("City not found");
         }
-        const regexMicrolocationSlug = new RegExp(`^${args.location}$`, "i");
+        // const regexMicrolocationSlug = new RegExp(`^${args.location}$`, "i");
     
         const microlocationsInCity = await MicroLocation.find({
-          name: regexMicrolocationSlug,
+          name: { $regex: args.location, $options: 'i' },
           city: city._id,
         }).exec();
         if (microlocationsInCity.length === 0) {
           return console.log("microlocation not found");
         }
-      
           const projects = await BuilderProject.find({"location.micro_location": microlocationsInCity[0]._id,
-           "priority.microlocationId": microlocationsInCity[0]._id, status: "approve",})
-         
+               status: "approve",})
             const filteredProjects = projects.filter((otherProject) => {
               return otherProject.priority.some((priority) => {
                 if (
