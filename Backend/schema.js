@@ -116,7 +116,8 @@ const RootQuery = new GraphQLObjectType({
       async resolve(parent, args) {
         try {
           const city = await City.findOne({name: { $regex: args.city, $options: 'i' }, active: true})
-        return await MicroLocation.find({city: city._id})
+        return await MicroLocation.find({city: city._id,
+          "priority.order": { $nin: [0, 1000] }}).sort({ "priority.order": 1 }).exec();
         } catch (error) {
           console.error('Error in microlocation resolver:', error);
           throw error;

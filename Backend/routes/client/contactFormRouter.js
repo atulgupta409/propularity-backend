@@ -29,7 +29,7 @@ router.post("/sendmail", (req, res) => {
     const mailOptions = {
       from: email,
       to: process.env.EMAIL,
-      subject: "Query from spacite",
+      subject: "Query from Propularity",
       html: emailContent,
     };
 
