@@ -28,7 +28,7 @@ router.post("/sendmail", (req, res) => {
 
     const mailOptions = {
       from: email,
-      to: process.env.EMAIL,
+      to: [process.env.EMAIL, process.env.EMAIL2],
       subject: "Query from Propularity",
       html: emailContent,
     };
