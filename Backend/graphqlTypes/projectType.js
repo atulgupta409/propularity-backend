@@ -120,6 +120,7 @@ const LocationType = new GraphQLObjectType({
       image: { type: GraphQLString },
       name: { type: GraphQLString },
       alt: { type: GraphQLString },
+      order: {type: GraphQLInt}
     },
   });
   const SeoType = new GraphQLObjectType({

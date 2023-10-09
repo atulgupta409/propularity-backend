@@ -232,12 +232,20 @@ const changeProjectStatus = asyncHandler(async (req, res) => {
 const getProjectsById = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const projects = await BuilderProject.findById(id).exec();
-    res.status(200).json(projects);
+    const project = await BuilderProject.findById(id)
+      .exec();
+
+    if (!project) {
+      res.status(404).json({ message: "Project not found" });
+    } else {
+      project.images.sort((a, b) => a.order - b.order);
+      res.status(200).json(project);
+    }
   } catch (error) {
-    res.status(404).json({ message: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
+
 
 const topProjectsOrder = asyncHandler(async (req, res) => {
   try {
@@ -987,6 +995,34 @@ const indiaProjectOrderbyDrag = asyncHandler(async (req, res) => {
       .json({ error: "An error occurred while updating priority" });
   }
 });
+const imageOrderChanges = asyncHandler(async (req, res) => {
+  try {
+    const { _id, updateImage } = req.body; // The array of updated projects sent from the client
+
+    // Loop through the updateImage array and update the image order for each item
+    for (const  Image of updateImage) {
+
+      // Update the image order using findByIdAndUpdate
+      await BuilderProject.findOneAndUpdate(
+        {
+          _id,
+          "images._id": Image._id, // Match the image by its _id within the array
+        },
+        {
+          $set: {
+            "images.$.order": Image.order, // Update the order field of the matched image
+          },
+        }
+      );
+    }
+
+    res.json({ message: "Priority updated successfully" });
+  } catch (error) {
+    console.error("Error updating priority:", error);
+    res.status(500).json({ error: "An error occurred while updating priority" });
+  }
+});
+
 module.exports = {
   postBuilderProjects,
   getProjects,
@@ -1014,5 +1050,6 @@ module.exports = {
   getProjectsWithPagination,
   indiaProjectsOrder,
   indiaProjectsWithPriority,
-  indiaProjectOrderbyDrag
+  indiaProjectOrderbyDrag,
+  imageOrderChanges
 };

@@ -45,7 +45,11 @@ const RootQuery = new GraphQLObjectType({
       },
       async resolve(parent, args) {
         try {
-        return await BuilderProject.find({slug: args.slug, status: "approve"})
+        const projects =  await BuilderProject.find({slug: args.slug, status: "approve"})
+         projects.forEach(project => {
+          project.images.sort((a, b) => a.order - b.order);
+        });
+        return projects
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
           throw error;
@@ -98,6 +102,10 @@ const RootQuery = new GraphQLObjectType({
               );
         
               return priorityA.order - priorityB.order;
+            });
+
+            filteredProjects.forEach(project => {
+              project.images.sort((a, b) => a.order - b.order);
             });
 
           return filteredProjects;
@@ -184,6 +192,9 @@ const RootQuery = new GraphQLObjectType({
       .populate("location.micro_location", "name")
       .sort({ "is_popular.order": 1 }) // Sort by priority.order in ascending order
       .exec();
+      projects.forEach(project => {
+        project.images.sort((a, b) => a.order - b.order);
+      });
 
          return projects
         } catch (error) {
@@ -202,8 +213,10 @@ const RootQuery = new GraphQLObjectType({
     })
       .populate("location.city", "name")
       .sort({ "priority_india.order": 1 }) // Sort by priority.order in ascending order
-      .exec();
-         
+      .exec();  
+      projects.forEach(project => {
+        project.images.sort((a, b) => a.order - b.order);
+      });
          return projects
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -249,7 +262,9 @@ const RootQuery = new GraphQLObjectType({
   
         return priorityA.order - priorityB.order;
       });
-
+       filteredProjects.forEach(project => {
+        project.images.sort((a, b) => a.order - b.order);
+      });
          return filteredProjects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -285,6 +300,9 @@ const RootQuery = new GraphQLObjectType({
            "location.micro_location": microlocationsInCity[0]._id,
              status: "approve",
         })
+        projects.forEach(project => {
+          project.images.sort((a, b) => a.order - b.order);
+        });
           return projects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -305,6 +323,9 @@ const RootQuery = new GraphQLObjectType({
         builder : builder[0]._id,
         status: "approve",
     })
+    projects.forEach(project => {
+      project.images.sort((a, b) => a.order - b.order);
+    });
          return projects
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -353,6 +374,9 @@ const RootQuery = new GraphQLObjectType({
         project_type: args.type,
         status: "approve",
     }) 
+    filteredProjects.forEach(project => {
+      project.images.sort((a, b) => a.order - b.order);
+    });
        return filteredProjects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
@@ -378,6 +402,9 @@ const RootQuery = new GraphQLObjectType({
           project_status: { $regex: args.status, $options: 'i' },
           status: "approve",
       }) 
+      filteredProjects.forEach(project => {
+        project.images.sort((a, b) => a.order - b.order);
+      });
        return filteredProjects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
