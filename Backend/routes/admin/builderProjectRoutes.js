@@ -28,7 +28,8 @@ const {
   indiaProjectsOrder,
   indiaProjectsWithPriority,
   indiaProjectOrderbyDrag,
-  imageOrderChanges
+  imageOrderChanges,
+  deleteProjectImage
 } = require("../../controllers/admin/builderProjectController");
 const router = express.Router();
 
@@ -36,8 +37,9 @@ router
   .post("/", protect, postBuilderProjects)
   .get("/projects",protect, getProjects)
   .get("/projects-page", getProjectsWithPagination)
-  .get("/projects/:id", getProjectsById)
+  .get("/projects/:id",protect, getProjectsById)
   .delete("/delete/:id",protect, deleteProjects)
+  .delete("/:projectId/images/:imageId",protect, deleteProjectImage)
   .put("/changeStatus/:id", protect, changeProjectStatus)
   .put("/edit-project/:id", protect, editProjects)
   .put("/top-projects/:id", protect, topProjectsOrder)
