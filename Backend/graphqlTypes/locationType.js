@@ -75,6 +75,7 @@ const {
       _id: { type: GraphQLID },
       name: { type: GraphQLString },
       description: { type: GraphQLString },
+      image: { type: GraphQLString },
       country: { type: CountryType },
       state: { type: StateType },
       city: { type: CityType }, // Use CityType here

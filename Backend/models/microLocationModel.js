@@ -4,6 +4,7 @@ const microLocationModel = mongoose.Schema(
   {
     name: { type: String, required: true, unique: true },
     description: String,
+    image: String,
     country: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Country",
