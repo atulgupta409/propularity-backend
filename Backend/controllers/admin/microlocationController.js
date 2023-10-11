@@ -13,11 +13,12 @@ const getMicroLocation = asyncHandler(async (req, res) => {
     .catch((err) => console.log(err));
 });
 const postMicroLocation = asyncHandler(async (req, res) => {
-  const { name, description, country, state, city } = req.body;
+  const { name, description,image, country, state, city } = req.body;
   try {
     const microLocationData = await MicroLocation.create({
       name,
       description,
+      image,
       country,
       state,
       city,
@@ -68,11 +69,12 @@ const getMicroBycityName = asyncHandler(async (req, res) => {
   }
 });
 const addOrEditMicrolocation = asyncHandler(async (req, res) => {
-  const { name, country, city, state, active } = req.body;
+  const { name, country, image, city, state, active } = req.body;
   const { id } = req.params;
 
   MicroLocation.findByIdAndUpdate(id, {
     name,
+    image,
     country,
     city,
     state,
