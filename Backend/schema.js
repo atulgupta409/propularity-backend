@@ -9,7 +9,9 @@ const { MicroLocationType,CityType } = require('./graphqlTypes/locationType');
 const BuilderProjectType = require('./graphqlTypes/projectType');
 const Builder = require('./models/builderModel');
 const BuilderType = require('./graphqlTypes/builderType');
-const PropertyType = require("./models/propertyTypeModel")
+const PropertyType = require("./models/propertyTypeModel");
+const { SeoTypes } = require('./graphqlTypes/seoType');
+const SEO = require('./models/seoModel');
 const PaginatedBuilderProjectsType = new GraphQLObjectType({
   name: 'PaginatedBuilderProjects',
   fields: () => ({
@@ -412,6 +414,24 @@ const RootQuery = new GraphQLObjectType({
         }
       },
     },
+    citySeoContent: {
+      type: GraphQLList(SeoTypes),
+      args: {
+        slug: {type: GraphQLString}
+      },
+      async resolve(parent, args ){
+        try {
+          const seo = await SEO.find({path: { $regex: args.slug, $options: 'i' }})
+          if (!seo) {
+            return console.log("seo not found")
+          }
+          return seo;
+        } catch (error) {
+          console.error('Error in seo resolver:', error);
+          throw error;
+        }
+      }
+    }
   },
 });
 module.exports = new GraphQLSchema({
