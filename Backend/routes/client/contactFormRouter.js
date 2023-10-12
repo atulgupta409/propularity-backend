@@ -8,6 +8,8 @@ router.post("/sendmail", (req, res) => {
     email,
     phone,
     PageLocation,
+    looking,
+    city
   } = req.body;
   try {
     const transporter = nodemailer.createTransport({
@@ -24,6 +26,8 @@ router.post("/sendmail", (req, res) => {
       <li>Email: ${email}</li>
       <li>Phone: ${phone}</li>
       <li>Page Location: ${PageLocation}</li>
+      <li>Looking for: ${looking}</li>
+      <li>City: ${city}</li>
     </ul>`;
 
     const mailOptions = {
