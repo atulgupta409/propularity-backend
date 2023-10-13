@@ -71,7 +71,6 @@ const RootQuery = new GraphQLObjectType({
           if (!city) {
           return console.log("City not found");
         }
-        // const regexMicrolocationSlug = new RegExp(`^${args.location}$`, "i");
     
         const microlocationsInCity = await MicroLocation.find({
           name: { $regex: args.location, $options: 'i' },
@@ -82,18 +81,8 @@ const RootQuery = new GraphQLObjectType({
         }
           const projects = await BuilderProject.find({"location.micro_location": microlocationsInCity[0]._id,
                status: "approve",})
-            const filteredProjects = projects.filter((otherProject) => {
-              return otherProject.priority.some((priority) => {
-                if (
-                  priority.microlocationId &&
-                  priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
-                ) {
-                  return priority.order !== 1000;
-                }
-              });
-            });
-          
-            filteredProjects.sort((a, b) => {
+           
+            projects.sort((a, b) => {
               const priorityA = a.priority.find(
                 (priority) =>
                   priority.microlocationId && priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
@@ -102,15 +91,15 @@ const RootQuery = new GraphQLObjectType({
                 (priority) =>
                   priority.microlocationId && priority.microlocationId.toString() === microlocationsInCity[0]._id.toString()
               );
-        
-              return priorityA.order - priorityB.order;
+              
+              return priorityA?.order - priorityB?.order;
             });
 
-            filteredProjects.forEach(project => {
-              project.images.sort((a, b) => a.order - b.order);
+            projects.forEach(project => {
+              project.images.sort((a, b) => a?.order - b?.order);
             });
 
-          return filteredProjects;
+          return projects;
         
         } catch (error) {
           console.error('Error in builderProjects resolver:', error);
@@ -244,15 +233,7 @@ const RootQuery = new GraphQLObjectType({
     })
       .populate("location.city", "name") 
       .exec();
-
-      const filteredProjects = projects.filter((otherProject) => {
-        return otherProject.plans_priority.some((priority) => {
-          if (priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()) {
-            return priority.order !== 1000;
-          }
-        });
-      });
-      filteredProjects.sort((a, b) => {
+      projects.sort((a, b) => {
         const priorityA = a.plans_priority.find(
           (priority) =>
             priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
@@ -262,12 +243,12 @@ const RootQuery = new GraphQLObjectType({
             priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
         );
   
-        return priorityA.order - priorityB.order;
+        return priorityA?.order - priorityB?.order;
       });
-       filteredProjects.forEach(project => {
-        project.images.sort((a, b) => a.order - b.order);
+      projects.forEach(project => {
+        project.images.sort((a, b) => a?.order - b?.order);
       });
-         return filteredProjects;
+         return projects;
         } catch (error) {
           console.error('Error in builder resolver:', error);
           throw error;
