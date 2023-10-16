@@ -159,7 +159,15 @@ const LocationType = new GraphQLObjectType({
     fields: {
       is_active: { type: GraphQLBoolean },
       order: { type: GraphQLInt },
-      microlocationId: { type: GraphQLID }, // You might want to use a MicroLocationType here
+      microlocationId: { type: GraphQLID }, 
+    },
+  });
+  const PlanPriorityType = new GraphQLObjectType({
+    name: 'PlanPriority',
+    fields: {
+      is_active: { type: GraphQLBoolean },
+      order: { type: GraphQLInt },
+      plans_type: { type: GraphQLID } 
     },
   });
   const PopularType = new GraphQLObjectType({
@@ -167,7 +175,7 @@ const LocationType = new GraphQLObjectType({
     fields: {
       status: { type: GraphQLBoolean },
       order: { type: GraphQLInt },
-      cityId: { type: GraphQLID }, // You might want to use a CityType here
+      cityId: { type: GraphQLID }, 
     },
   });
   const BuilderProjectType = new GraphQLObjectType({
@@ -211,6 +219,7 @@ const LocationType = new GraphQLObjectType({
       is_active: { type: GraphQLBoolean },
       status: { type: GraphQLString },
       priority: { type: GraphQLList(PriorityType) },
+      plans_priority: {type: PlanPriorityType},
       is_popular: { type: PopularType },
       createdAt: { type: GraphQLDateTime },
       updatedAt: { type: GraphQLDateTime },

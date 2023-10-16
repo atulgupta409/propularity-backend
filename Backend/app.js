@@ -28,6 +28,7 @@ const schema = require('./schema');
 const app = express();
 const AWS = require("aws-sdk");
 const contactFormRouter = require("./routes/client/contactFormRouter");
+const BuilderProject = require("./models/builderProjectModel")
 require("dotenv").config();
 connectDB();
 
@@ -112,6 +113,17 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
 
 app.get("/", (req, res) => {
   res.send("API is running for propularity...");
+});
+app.post("/remove-plans-priority", async (req, res) => {
+  try {
+    // Remove plans_priority field from all projects
+    const result = await BuilderProject.updateMany({}, { $unset: { plans_priority: 1 } });
+
+    res.json({ message: "plans_priority removed from all projects", result });
+  } catch (error) {
+    console.error("Error removing plans_priority:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 //-----------------aws-s3------------------------

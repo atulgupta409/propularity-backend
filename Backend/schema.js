@@ -232,19 +232,8 @@ const RootQuery = new GraphQLObjectType({
            status: "approve",
     })
       .populate("location.city", "name") 
+      .sort({ "plans_priority.order": 1 })
       .exec();
-      projects.sort((a, b) => {
-        const priorityA = a.plans_priority.find(
-          (priority) =>
-            priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
-        );
-        const priorityB = b.plans_priority.find(
-          (priority) =>
-            priority.plans_type && priority.plans_type.toString() === planType[0]._id.toString()
-        );
-  
-        return priorityA?.order - priorityB?.order;
-      });
       projects.forEach(project => {
         project.images.sort((a, b) => a?.order - b?.order);
       });

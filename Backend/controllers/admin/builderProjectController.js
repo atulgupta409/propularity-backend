@@ -772,132 +772,160 @@ const getProjectsbyPlansAndCity = asyncHandler(async (req, res) => {
   }
 });
 const changePlansProjectOrder = asyncHandler(async (req, res) => {
+  // try {
+  //   const { id } = req.params;
+  //   const { order, is_active, plans_type, cityId } = req.body;
+
+  //   const projectToUpdate = await BuilderProject.findById(id);
+    
+  //   if (!projectToUpdate) {
+  //     return res.status(404).json({ error: "Project not found" });
+  //   }
+  //   if (
+  //     !projectToUpdate.location.city === cityId
+  //   ) {
+  //     return res.status(400).json({
+  //       error: "None of the project match the specified plan types",
+  //     });
+  //   }
+  //   const currentplans_priority = projectToUpdate.plans_priority.find(
+  //     (plans_priority) =>
+  //       plans_priority.plans_type &&
+  //       plans_priority.plans_type.toString() === plans_type &&
+  //       plans_priority.is_active
+  //   );
+  //   let currentOrder = currentplans_priority
+  //     ? currentplans_priority.order
+  //     : 1000;
+   
+  //   if (is_active === false && order === 1000) {
+  //     projectToUpdate.plans_priority.forEach((plans_priority) => {
+  //       if (
+  //         plans_priority.plans_type &&
+  //         plans_priority.plans_type.toString() === plans_type
+  //       ) {
+  //         plans_priority.order = order;
+  //         plans_priority.is_active = false;
+  //       }
+  //     });
+  //     await projectToUpdate.save();
+
+  //     const otherProjects = await BuilderProject.find({
+  //       _id: { $ne: id },
+  //        plans_type: plans_type,
+  //        "location.city": cityId,
+  //       "plans_priority.is_active": true,
+  //     });
+  //     const projectIdsToUpdate = otherProjects.filter((otherProject) => {
+  //       return otherProject.plans_priority.some((plans_priority) => {
+  //         if (
+  //           plans_priority.plans_type &&
+  //           plans_priority.plans_type.toString() === plans_type
+  //         ) {
+  //           return (
+  //             plans_priority.order > currentOrder &&
+  //             plans_priority.order !== 1000
+  //           );
+  //         }
+  //       });
+  //     });
+  //     for (const otherProject of projectIdsToUpdate) {
+  //       otherProject.plans_priority.forEach((plans_priority) => {
+  //         if (
+  //           plans_priority.plans_type &&
+  //           plans_priority.plans_type.toString() === plans_type
+  //         ) {
+  //           plans_priority.order = plans_priority.order - 1;
+  //         }
+  //       });
+
+  //       otherProject.markModified("plans_priority"); // Mark the field as modified
+  //       await otherProject.save();
+  //     }
+  //   } else {
+  //     let existingplans_priorityFound = false;
+  //     projectToUpdate.plans_priority.forEach((plans_priority) => {
+  //       if (
+  //         plans_priority.plans_type &&
+  //         plans_priority.plans_type.toString() === plans_type
+  //       ) {
+  //         plans_priority.order = order;
+  //         plans_priority.is_active = order !== 1000;
+  //         plans_priority.plans_type = plans_type;
+  //         existingplans_priorityFound = true;
+  //       }
+  //     });
+  //     if (!existingplans_priorityFound) {
+  //       projectToUpdate.plans_priority.push({
+  //         is_active: is_active,
+  //         order: order,
+  //         plans_type: plans_type,
+  //       });
+  //       projectToUpdate.markModified("plans_priority"); // Mark the field as modified
+  //     }
+  //     await projectToUpdate.save();
+  //   }
+
+  //   res.json({ message: "plans_priority updated successfully" });
+  // } catch (error) {
+  //   console.error("Error occurred:", error);
+  //   res.status(500).json({ error: "An error occurred" });
+  // }
   try {
     const { id } = req.params;
-    const { order, is_active, plans_type, cityId } = req.body;
+    const { order, is_active } = req.body;
 
-    const projectToUpdate = await BuilderProject.findById(id);
-    
-    if (!projectToUpdate) {
+    // Find the coworking project to be updated
+    const projectsToUpdate = await BuilderProject.findById(id);
+
+    if (!projectsToUpdate) {
       return res.status(404).json({ error: "Project not found" });
     }
-    if (
-      !projectToUpdate.location.city === cityId
-    ) {
-      return res.status(400).json({
-        error: "None of the project match the specified plan types",
-      });
-    }
-    const currentplans_priority = projectToUpdate.plans_priority.find(
-      (plans_priority) =>
-        plans_priority.plans_type &&
-        plans_priority.plans_type.toString() === plans_type &&
-        plans_priority.is_active
-    );
-    let currentOrder = currentplans_priority
-      ? currentplans_priority.order
-      : 1000;
-   
+
+    const currentOrder = projectsToUpdate.plans_priority.order;
     if (is_active === false && order === 1000) {
-      projectToUpdate.plans_priority.forEach((plans_priority) => {
-        if (
-          plans_priority.plans_type &&
-          plans_priority.plans_type.toString() === plans_type
-        ) {
-          plans_priority.order = order;
-          plans_priority.is_active = false;
-        }
-      });
-      await projectToUpdate.save();
+      projectsToUpdate.plans_priority.is_active = false;
+      projectsToUpdate.plans_priority.order = order;
+      await projectsToUpdate.save();
 
-      const otherProjects = await BuilderProject.find({
-        _id: { $ne: id },
-         plans_type: plans_type,
-         "location.city": cityId,
-        "plans_priority.is_active": true,
-      });
-      const projectIdsToUpdate = otherProjects.filter((otherProject) => {
-        return otherProject.plans_priority.some((plans_priority) => {
-          if (
-            plans_priority.plans_type &&
-            plans_priority.plans_type.toString() === plans_type
-          ) {
-            return (
-              plans_priority.order > currentOrder &&
-              plans_priority.order !== 1000
-            );
-          }
-        });
-      });
-      for (const otherProject of projectIdsToUpdate) {
-        otherProject.plans_priority.forEach((plans_priority) => {
-          if (
-            plans_priority.plans_type &&
-            plans_priority.plans_type.toString() === plans_type
-          ) {
-            plans_priority.order = plans_priority.order - 1;
-          }
-        });
-
-        otherProject.markModified("plans_priority"); // Mark the field as modified
-        await otherProject.save();
-      }
+      // Decrement the higher order coworking projects by one
+      await BuilderProject.updateMany(
+        {
+          _id: { $ne: id }, // Exclude the current coworking project
+          "plans_priority.order": { $gt: currentOrder }, // Higher order workprojects
+          "plans_priority.is_active": true,
+        },
+        { $inc: { "plans_priority.order": -1 } }
+      );
     } else {
-      let existingplans_priorityFound = false;
-      projectToUpdate.plans_priority.forEach((plans_priority) => {
-        if (
-          plans_priority.plans_type &&
-          plans_priority.plans_type.toString() === plans_type
-        ) {
-          plans_priority.order = order;
-          plans_priority.is_active = order !== 1000;
-          plans_priority.plans_type = plans_type;
-          existingplans_priorityFound = true;
-        }
-      });
-      if (!existingplans_priorityFound) {
-        projectToUpdate.plans_priority.push({
-          is_active: is_active,
-          order: order,
-          plans_type: plans_type,
-        });
-        projectToUpdate.markModified("plans_priority"); // Mark the field as modified
-      }
-      await projectToUpdate.save();
+      // Update the priority of the coworking project to the specified order
+      projectsToUpdate.plans_priority.order = order;
+
+      // Update the "is_active" field based on the specified order
+      projectsToUpdate.plans_priority.is_active = order !== 1000;
+
+      await projectsToUpdate.save();
     }
 
-    res.json({ message: "plans_priority updated successfully" });
+    res.json(projectsToUpdate);
   } catch (error) {
-    console.error("Error occurred:", error);
     res.status(500).json({ error: "An error occurred" });
   }
 });
 const changePlansProjectOrderbyDrag = asyncHandler(async (req, res) => {
   try {
-    const updatedProjects = req.body;
+    const updatedProjects = req.body; // The array of updated projects sent from the client
 
+    // Loop through the updatedProjects array and update each coworking project in the database
     for (const project of updatedProjects) {
       const { _id, plans_priority } = project;
-
-      // Find the project by its _id
-      const existingProject = await BuilderProject.findById(_id);
-
-      // Find the index of the priority object within the priority array
-
-      const priorityIndex = existingProject.plans_priority.findIndex(
-        (p) => p.plans_type.toString() === plans_priority.plans_type
-      );
-
-      if (priorityIndex !== -1) {
-        // Update the order and is_active fields for the specific priority object
-        existingProject.plans_priority[priorityIndex].order =
-          plans_priority.order;
-        existingProject.plans_priority[priorityIndex].is_active =
-          plans_priority.order !== 1000;
-
-        // Save the updated project
-        await existingProject.save();
-      }
+      // Find the coworking project by its _id and update its priority order
+      await BuilderProject.findByIdAndUpdate(_id, {
+        $set: {
+          "plans_priority.order": plans_priority.order,
+          "plans_priority.is_active": plans_priority.order !== 1000,
+        },
+      });
     }
 
     res.json({ message: "Priority updated successfully" });
@@ -912,36 +940,17 @@ const getProjectbyByPlansWithPriority = asyncHandler(async (req, res) => {
   const { id, city } = req.params;
   try {
     const projects = await BuilderProject.find({
-      "location.city": city,
       plans_type: id,
+      "location.city": city,
       status: "approve",
-      "plans_priority.plans_type": id,
+      "plans_priority.is_active": true,
     })
       .populate("location.city", "name")
-      .populate("location.micro_location", "name")
       .select("name plans_priority")
+      .sort({ "plans_priority.order": 1 })
       .exec();
-
-    const filteredProjects = projects.filter((otherProject) => {
-      return otherProject.plans_priority.some((priority) => {
-        if (priority.plans_type && priority.plans_type.toString() === id) {
-          return priority.order !== 1000;
-        }
-      });
-    });
-    filteredProjects.sort((a, b) => {
-      const priorityA = a.plans_priority.find(
-        (priority) =>
-          priority.plans_type && priority.plans_type.toString() === id
-      );
-      const priorityB = b.plans_priority.find(
-        (priority) =>
-          priority.plans_type && priority.plans_type.toString() === id
-      );
-
-      return priorityA.order - priorityB.order;
-    });
-    res.json(filteredProjects);
+    
+    res.json(projects);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
