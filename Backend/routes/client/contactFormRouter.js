@@ -3,14 +3,8 @@ const router = express.Router();
 const nodemailer = require("nodemailer");
 
 router.post("/sendmail", (req, res) => {
-  const {
-    name,
-    email,
-    phone,
-    PageLocation,
-    looking,
-    city
-  } = req.body;
+  const { name, email, phone, looking, PageLocation, city, location } =
+    req.body;
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -21,14 +15,25 @@ router.post("/sendmail", (req, res) => {
       secure: true,
     });
     let emailContent;
+    if (looking) {
       emailContent = `<ul>
       <li>Name: ${name}</li>
       <li>Email: ${email}</li>
       <li>Phone: ${phone}</li>
-      <li>Page Location: ${PageLocation}</li>
       <li>Looking for: ${looking}</li>
       <li>City: ${city}</li>
+      <li>Page Location: ${PageLocation}</li>
     </ul>`;
+    } else {
+      emailContent = `<ul>
+      <li>Name: ${name}</li>
+      <li>Email: ${email}</li>
+      <li>Phone: ${phone}</li>
+      <li>City: ${city}</li>
+      <li>Location: ${location}</li>
+      <li>Page Location: ${PageLocation}</li>
+    </ul>`;
+    }
 
     const mailOptions = {
       from: email,
