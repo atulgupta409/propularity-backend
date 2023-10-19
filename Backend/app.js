@@ -63,6 +63,7 @@ const upload = multer({ storage: storage });
 
 const allowedFormats = ["image/jpeg", "image/png", "image/svg+xml"];
 const pdfAllowFormats = ["application/pdf"];
+const videoAllowFormats = ["video/mp4", "video/quicktime", "video/webm", "video/ogg"];
 
 app.post("/upload-image", upload.array("files"), (req, res) => {
   const promiseArray = [];
@@ -87,6 +88,17 @@ app.post("/upload-image", upload.array("files"), (req, res) => {
         Acl: "public-read",
         Bucket: process.env.BUCKET_NAME,
         Key: `image-${Date.now()}.${file.originalname.split(".").pop()}`,
+        Body: file.buffer,
+      };
+      const putObjectPromise = s3Client.upload(params).promise();
+      promiseArray.push(putObjectPromise);
+    }
+    else if (videoAllowFormats.includes(file.mimetype)) {
+      // Handle video files
+      const params = {
+        Acl: "public-read",
+        Bucket: process.env.BUCKET_NAME,
+        Key: `video-${Date.now()}.${file.originalname.split(".").pop()}`,
         Body: file.buffer,
       };
       const putObjectPromise = s3Client.upload(params).promise();
